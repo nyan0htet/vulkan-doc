@@ -1,0 +1,34 @@
+// Sturcture -> 
+typedef struct structName{
+    memberType memberName;
+    memberType1 memberName1;
+};
+
+// Union ->
+typedef union UnionName{
+    memberType memberName;
+    memberType1 memberName1;
+};
+
+// Enum ->
+typedef Enum enumName{
+    member:value,
+    member1:value1,
+    member2:member1
+};
+
+// functionpointer ->
+typedef returnType (Macro *PointerName)(arguements)
+typedef void (PTT* someFunc)(void)
+
+// Alias ->
+typedef structName* newName;
+
+// Macro ->
+#define MacroName value
+
+// MacroFunction ->
+#define FuncName(var1,var) kfkdjsaf...
+
+// commnad ->
+returnType funcName(newName paramName1,dataType2 paramName2);

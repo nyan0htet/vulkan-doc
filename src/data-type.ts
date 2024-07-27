@@ -1,67 +1,68 @@
 export type BasicKeyword = "uint64_t" | "uint32_t" | "auto" | "char" | "const" | "double" | "enum" | "extern" | "float" | "inline" | "int" | "long" | "register" | "restrict" | "return" | "short" | "signed" | "sizeof" | "static" | "Union" | "typedef" | "union" | "unsigned" | "void" | "volatile" | "_Alignas" | "_Alignof" | "_Atomic" | "_Bool" | "_Complex" | "_Generic" | "_Imaginary" | "_Noreturn" | "_Static_assert" | "_Thread_local";
-export type DataGroup = "Struct" | "Union" | "Enum" | "FunctionPointer" | "Alias" | "Macro" | "MacroCall" | "MacroFunction" | "Command";
-type MacroParamType="string"|"number"|"object";
+export type DataGroup = "Struct" | "Union" | "Enum" | "FunctionPointer" | "Alias" | "Macro" | "MacroFunction" | "Command";
+type MacroParamType="string"|"number"|"object"|"general";
 export type Description = [undefined, number, string, string];
 
 /**
+ "*one two|$three four|^five six"
  * = opposite,same
  $ = related
  ^ = tag
  ` = condition
  */
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+ * start : version,tag,explanation  
+ * body  : modifier, memberName, version, validUsage, explanation   
+ */
 export type StructT = {
-    // struct : [modifier, member, version, validUsage, comment]
-    // last : version,link,comment.
     [key: `Vk${string}`]: [number, string, string, ...([string, string, number, string,string][])]
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+ * start : version,tag,explanation  
+ * body  : modifier, memberName, version, validUsage, explanation   
+ */
 export type UnionT = {
-    // Union : [modifier, member, ?version, ?comment]
-    // last : [version,link,comment].
-    [key: `VK_${string}`]: [...([string, string] | [string, string, string] | [string, string, number] | [string, string, number, string]), Description?]
+    [key: `Vk${string}`]: [number, string, string, ...([string, string, number, string,string][])]
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type EnumValue = `0x${string & { length: 8 }}` | `0x${string & { length: 16 }}` | number | `VK_${string}`;
+/**
+ * start : version,tag,explanation
+ * body  : value or alias, version, tag, explanation.
+ */
 export type EnumT = {
-    // enum : [member,value,?version,?link,?comment] or [member,alias,?version,?link,?comment]
-    // last : [version,link,comment].
     [key: `Vk${string}`]: [number, string, string, ...([`VK_${string}`, [EnumValue, number, string, string][]][])]
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
- * first : "returnType","PointerPrefix"
- * param : [modifier, member, validation, comment].
- * @example
- * typedef VkResult (VKAPI_PTR *PFN_vkCreateDebugUtilsMessengerEXT)(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger);
- * typedef void (VKAPI_PTR *PFN_vkDestroyDebugUtilsMessengerEXT)(VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks* pAllocator);
+ * start : returnType,PointerPrefix
+ * param : parameterDataType, parameterName, validUsage, explanation.
  */
 export type FunctionPointerT = {
     [key: string]: [string, string, number, string, string, ...([string, string, string, string][])]
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type AliasOrigin = `struct Vk${string}` | `union Vk${string}` | BasicKeyword | `${BasicKeyword}${string}`;
+/**
+ * body: aliasOrigin, version, tag, explanation
+ */
 export type AliasT = {
-    // aliasName : [AliasOrigin,?version,?link,?comment]
-    [key: `Vk${string}`]: ([AliasOrigin] | [AliasOrigin, string] | [AliasOrigin, string, string] | [AliasOrigin, number] | [AliasOrigin, number, string] | [AliasOrigin, number, string, string])
+    [key: `Vk${string}`]: [AliasOrigin, number, string, string]
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type MacroValue = `0x${string & { length: 8 }}` | `0x${string & { length: 16 }}` | number | `VK_${string}` | `${number} ${"U"}`;
+/**
+ * body : macroValue, version, tag, explanation.
+ */
 export type MacroT = {
-    // macro : [value,?version,?link,?comment] or [alias,?version,?link,?comment]
-    // last : [version,link,comment].
-    [key: `VK_${string}`]: [MacroValue] | [MacroValue, string] | [MacroValue, string, string] | [MacroValue, number] | [MacroValue, number, string] | [MacroValue, number, string, string]
-};
-type MacroCallValue = `0x${string & { length: 8 }}` | `0x${string & { length: 16 }}` | number;
-export type MacroCallT = {
-    // first : aliasMacro
-    // param : [value,?version,?comment]
-    // last  : [version,link,comment]
-    [key: `VK_${string}`]: [string, ...([MacroCallValue] | [MacroCallValue, string] | [MacroCallValue, number] | [MacroCallValue, number, string]), Description?]
+    [key: `VK_${string}`]: [MacroValue, number, string, string]
 };
 /**
- * first  : [version,link,comment].
- * param : [modifier, member, ?version, ?comment].
+ * first  : version,tag, explanation, functionbody.
+ * param : parameterDatatype, parameterName, tag, explanation.
  */
 export type MacroFunctionT = {
     [key: `VK_${string}`]: [number, string, string,string,...([MacroParamType, string, string, string][])]
@@ -71,8 +72,9 @@ type FilterReturn={
     returns?:string[]
 };
 /**
- * first : returnType,version,tag,explanation.    
- * param : [modifier, member, validUsage, comment].  
+ * start    : returnType, version, tag, explanation
+ * optional : filterReturn.
+ * body     : modifier, member, validUsage, explanation.  
  */
 export type CommandT = {
     [key: string]: [string, number, string, string,FilterReturn,...([string, string, string, string][])]
