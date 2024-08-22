@@ -1,0 +1,938 @@
+<div class="sect3">
+    <h4 id="memory-external-handle-types"><a class="anchor" href="#memory-external-handle-types"></a>11.2.18.
+        External Memory Handle Types</h4>
+    <div class="sect4">
+        <h5 id="memory-external-android-hardware-buffer"><a class="anchor"
+                href="#memory-external-android-hardware-buffer"></a>Android Hardware Buffer</h5>
+        <div class="paragraph">
+            <p>Android&#8217;s NDK defines <a href="#AHardwareBuffer">AHardwareBuffer</a> objects, which
+                represent
+                device memory that is shareable across processes and that <strong class="purple">can</strong> be
+                accessed
+                by a variety of media APIs and the hardware used to implement them.
+                These Android hardware buffer objects <strong class="purple">may</strong> be imported into
+                <a href="#VkDeviceMemory">VkDeviceMemory</a> objects for access via Vulkan, or exported from
+                Vulkan.
+                An <a href="#VkImage">VkImage</a> or <a href="#VkBuffer">VkBuffer</a> <strong
+                    class="purple">can</strong> be bound to the imported or exported
+                <a href="#VkDeviceMemory">VkDeviceMemory</a> object if it is created with
+                <code>VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID</code>.
+            </p>
+        </div>
+        <div class="openblock">
+            <div class="content">
+                <div class="paragraph">
+                    <p>To remove an unnecessary compile time dependency, an incomplete type
+                        definition of <a href="#AHardwareBuffer">AHardwareBuffer</a> is provided in the
+                        Vulkan headers:
+                    </p>
+                </div>
+                <div id="AHardwareBuffer" class="listingblock">
+                    <div class="content">
+                        <pre class="rouge highlight"><code data-lang="c++"><span class="c1">// Provided by VK_ANDROID_external_memory_android_hardware_buffer</span>
+<span class="k">struct</span> <span class="nc">AHardwareBuffer</span><span class="p">;</span></code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>The actual <a href="#AHardwareBuffer">AHardwareBuffer</a> type is defined in Android
+                        NDK headers.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="admonitionblock note">
+            <table>
+                <tr>
+                    <td class="icon">
+                        <div class="title">Note</div>
+                    </td>
+                    <td class="content">
+                        <div class="paragraph">
+                            <p>The NDK format, usage, and size/dimensions of an <a
+                                    href="#AHardwareBuffer">AHardwareBuffer</a>
+                                object can be obtained with the <code>AHardwareBuffer_describe</code>
+                                function.
+                                While Android hardware buffers can be imported to or exported from Vulkan
+                                without using that function, valid usage and implementation behavior is
+                                defined in terms of the <code>AHardwareBuffer_Desc</code> properties it
+                                returns.</p>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="paragraph">
+            <p>Android hardware buffer objects are reference-counted using Android NDK
+                functions outside of the scope of this specification.
+                A <a href="#VkDeviceMemory">VkDeviceMemory</a> imported from an Android hardware buffer or
+                that
+                <strong class="purple">can</strong>
+                be exported to an Android hardware buffer <strong class="purple">must</strong> acquire a
+                reference to
+                its
+                <a href="#AHardwareBuffer">AHardwareBuffer</a> object, and <strong class="purple">must</strong>
+                release this reference when the
+                device memory is freed.
+                During the host execution of a Vulkan command that has an Android hardware
+                buffer as a parameter (including indirect parameters via <code>pNext</code>
+                chains), the application <strong class="purple">must</strong> not decrement the Android
+                hardware
+                buffer&#8217;s
+                reference count to zero.
+            </p>
+        </div>
+        <div class="paragraph">
+            <p>Android hardware buffers <strong class="purple">can</strong> be mapped and unmapped for CPU
+                access
+                using
+                the NDK functions.
+                These lock and unlock APIs are considered to acquire and release ownership
+                of the Android hardware buffer, and applications <strong class="purple">must</strong> follow
+                the rules
+                described in <a href="#resources-external-sharing">External Resource Sharing</a> to
+                transfer ownership between the Vulkan instance and these native APIs.</p>
+        </div>
+        <div class="paragraph">
+            <p>Android hardware buffers <strong class="purple">can</strong> be shared with external APIs and
+                Vulkan
+                instances on the same device, and also with foreign devices.
+                When transferring ownership of the Android hardware buffer, the external and
+                foreign special queue families described in
+                <a href="#synchronization-queue-transfers">Queue Family Ownership Transfer</a> are not
+                identical.
+                All APIs which produce or consume Android hardware buffers are considered to
+                use foreign devices, except OpenGL ES contexts and Vulkan logical devices
+                that have matching device and driver UUIDs.
+                Implementations <strong class="purple">may</strong> treat a transfer to or from the foreign
+                queue
+                family as
+                if it were a transfer to or from the external queue family when the Android
+                hardware buffer&#8217;s usage only permits it to be used on the same physical
+                device.
+            </p>
+        </div>
+        <div class="sect5">
+            <h6 id="memory-external-android-hardware-buffer-optimal-usages"><a class="anchor"
+                    href="#memory-external-android-hardware-buffer-optimal-usages"></a>Android Hardware
+                Buffer Optimal
+                Usages</h6>
+            <div class="paragraph">
+                <p>Vulkan buffer and image usage flags do not correspond exactly to Android
+                    hardware buffer usage flags.
+                    When allocating Android hardware buffers with non-Vulkan APIs, if any
+                    <code>AHARDWAREBUFFER_USAGE_GPU_*</code> usage bits are included, by default the
+                    allocator <strong class="purple">must</strong> allocate the memory in such a way that it
+                    supports
+                    Vulkan
+                    usages and creation flags in the
+                    <a href="#memory-external-android-hardware-buffer-usage">usage equivalence table</a>
+                    which do not have Android hardware buffer equivalents.
+                </p>
+            </div>
+            <div class="paragraph">
+                <p>An <a href="#VkAndroidHardwareBufferUsageANDROID">VkAndroidHardwareBufferUsageANDROID</a>
+                    structure
+                    <strong class="purple">can</strong> be included in
+                    the <code>pNext</code> chain of a <a href="#VkImageFormatProperties2">VkImageFormatProperties2</a>
+                    structure passed
+                    to <a
+                        href="#vkGetPhysicalDeviceImageFormatProperties2">vkGetPhysicalDeviceImageFormatProperties2</a>
+                    to
+                    obtain optimal Android
+                    hardware buffer usage flags for specific Vulkan resource creation
+                    parameters.
+                    Some usage flags returned by these commands are <strong class="purple">required</strong>
+                    based on
+                    the input
+                    parameters, but additional vendor-specific usage flags
+                    (<code>AHARDWAREBUFFER_USAGE_VENDOR_*</code>) <strong class="purple">may</strong> also
+                    be returned.
+                    Any Android hardware buffer allocated with these vendor-specific usage flags
+                    and imported to Vulkan <strong class="purple">must</strong> only be bound to resources
+                    created with
+                    parameters that are a subset of the parameters used to obtain the Android
+                    hardware buffer usage, since the memory <strong class="purple">may</strong> have been
+                    allocated in a
+                    way
+                    incompatible with other parameters.
+                    If an Android hardware buffer is successfully allocated with additional
+                    non-vendor-specific usage flags in addition to the recommended usage, it
+                    <strong class="purple">must</strong> support being used in the same ways as an Android
+                    hardware
+                    buffer
+                    allocated with only the recommended usage, and also in ways indicated by the
+                    additional usage.
+                </p>
+            </div>
+        </div>
+        <div class="sect5">
+            <h6 id="memory-external-android-hardware-buffer-external-formats"><a class="anchor"
+                    href="#memory-external-android-hardware-buffer-external-formats"></a>Android Hardware
+                Buffer
+                External Formats</h6>
+            <div class="paragraph">
+                <p>Android hardware buffers <strong class="purple">may</strong> represent images using
+                    implementation-specific
+                    formats, layouts, color models, etc., which do not have Vulkan equivalents.
+                    Such <em>external formats</em> are commonly used by external image sources such as
+                    video decoders or cameras.
+                    Vulkan <strong class="purple">can</strong> import Android hardware buffers that have
+                    external
+                    formats, but
+                    since the image contents are in a possibly proprietary representation,
+                    images with external formats <strong class="purple">must</strong> have optimal tiling,
+                    and their use
+                    is
+                    restricted.
+                    Images with external formats <strong class="purple">must</strong> only be sampled with a
+                    sampler
+                    that has
+                    Y′C<sub>B</sub>C<sub>R</sub> conversion enabled.</p>
+            </div>
+            <div class="paragraph">
+                <p>Images that will be backed by an Android hardware buffer <strong class="purple">can</strong> use
+                    an
+                    external format by setting <a href="#VkImageCreateInfo">VkImageCreateInfo</a>::<code>format</code>
+                    to
+                    <code>VK_FORMAT_UNDEFINED</code> and including a <a
+                        href="#VkExternalFormatANDROID">VkExternalFormatANDROID</a>
+                    structure in the <code>pNext</code> chain.
+                    Images <strong class="purple">can</strong> be created with an external format even if
+                    the Android
+                    hardware
+                    buffer has a format which has an
+                    <a href="#memory-external-android-hardware-buffer-formats">equivalent Vulkan format</a>
+                    to enable consistent handling of images from sources that might use either
+                    category of format.
+                    However, all images created with an external format are subject to the valid
+                    usage requirements associated with external formats, even if the Android
+                    hardware buffer&#8217;s format has a Vulkan equivalent.
+                    The external format of an Android hardware buffer <strong class="purple">can</strong> be
+                    obtained by
+                    passing a <a
+                        href="#VkAndroidHardwareBufferFormatPropertiesANDROID">VkAndroidHardwareBufferFormatPropertiesANDROID</a>
+                    structure to
+                    <a
+                        href="#vkGetAndroidHardwareBufferPropertiesANDROID">vkGetAndroidHardwareBufferPropertiesANDROID</a>.
+                </p>
+            </div>
+        </div>
+        <div class="sect5">
+            <h6 id="memory-external-android-hardware-buffer-image-resources"><a class="anchor"
+                    href="#memory-external-android-hardware-buffer-image-resources"></a>Android Hardware
+                Buffer Image
+                Resources</h6>
+            <div class="paragraph">
+                <p>Android hardware buffers have intrinsic width, height, format, and usage
+                    properties, so Vulkan images bound to memory imported from an Android
+                    hardware buffer <strong class="purple">must</strong> use dedicated allocations:
+                    <code>VkMemoryDedicatedRequirements</code>::<code>requiresDedicatedAllocation</code>
+                    <strong class="purple">must</strong>
+                    be <code>VK_TRUE</code> for images created with
+                    <a
+                        href="#VkExternalMemoryImageCreateInfo">VkExternalMemoryImageCreateInfo</a>::<code>handleTypes</code>
+                    that includes
+                    <code>VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID</code>.
+                    When creating an image that will be bound to an imported Android hardware
+                    buffer, the image creation parameters <strong class="purple">must</strong> be equivalent
+                    to the
+                    <a href="#AHardwareBuffer">AHardwareBuffer</a> properties as described by the valid
+                    usage of
+                    <a href="#VkMemoryAllocateInfo">VkMemoryAllocateInfo</a>.
+                    Similarly, device memory allocated for a dedicated image <strong class="purple">must</strong>
+                    not be
+                    exported to an Android hardware buffer until it has been bound to that
+                    image, and the implementation <strong class="purple">must</strong> return an Android
+                    hardware buffer
+                    with
+                    properties derived from the image:
+                </p>
+            </div>
+            <div class="ulist">
+                <ul>
+                    <li>
+                        <p>The <code>width</code> and <code>height</code> members of
+                            <code>AHardwareBuffer_Desc</code>
+                            <strong class="purple">must</strong> be the same as the <code>width</code> and
+                            <code>height</code> members of
+                            <a href="#VkImageCreateInfo">VkImageCreateInfo</a>::<code>extent</code>,
+                            respectively.
+                        </p>
+                    </li>
+                    <li>
+                        <p>The <code>layers</code> member of <code>AHardwareBuffer_Desc</code> <strong
+                                class="purple">must</strong> be the same as
+                            the <code>arrayLayers</code> member of <a href="#VkImageCreateInfo">VkImageCreateInfo</a>.
+                        </p>
+                    </li>
+                    <li>
+                        <p>The <code>format</code> member of <code>AHardwareBuffer_Desc</code> <strong
+                                class="purple">must</strong> be equivalent
+                            to <a href="#VkImageCreateInfo">VkImageCreateInfo</a>::<code>format</code> as
+                            defined by
+                            <a href="#memory-external-android-hardware-buffer-formats">AHardwareBuffer
+                                Format
+                                Equivalence</a>.
+                        </p>
+                    </li>
+                    <li>
+                        <p>The <code>usage</code> member of <code>AHardwareBuffer_Desc</code> <strong
+                                class="purple">must</strong> include bits
+                            corresponding to bits included in <a
+                                href="#VkImageCreateInfo">VkImageCreateInfo</a>::<code>usage</code>
+                            and <a href="#VkImageCreateInfo">VkImageCreateInfo</a>::<code>flags</code> where
+                            such a
+                            correspondence
+                            exists according to
+                            <a href="#memory-external-android-hardware-buffer-usage">AHardwareBuffer Usage
+                                Equivalence</a>.
+                            It <strong class="purple">may</strong> also include additional usage bits,
+                            including
+                            vendor-specific
+                            usages.
+                            Presence of vendor usage bits <strong class="purple">may</strong> make the
+                            Android hardware
+                            buffer only
+                            usable in ways indicated by the image creation parameters, even when
+                            used outside Vulkan, in a similar way that allocating the Android
+                            hardware buffer with usage returned in
+                            <a href="#VkAndroidHardwareBufferUsageANDROID">VkAndroidHardwareBufferUsageANDROID</a>
+                            does.
+                        </p>
+                    </li>
+                </ul>
+            </div>
+            <div class="paragraph">
+                <p>Implementations <strong class="purple">may</strong> support fewer combinations of image
+                    creation
+                    parameters
+                    for images with Android hardware buffer external handle type than for
+                    non-external images.
+                    Support for a given set of parameters <strong class="purple">can</strong> be determined
+                    by passing
+                    <a href="#VkExternalImageFormatProperties">VkExternalImageFormatProperties</a> to
+                    <a href="#vkGetPhysicalDeviceImageFormatProperties2">vkGetPhysicalDeviceImageFormatProperties2</a>
+                    with <code>handleType</code> set to
+                    <code>VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID</code>.
+                    Any Android hardware buffer successfully allocated outside Vulkan with usage
+                    that includes <code>AHARDWAREBUFFER_USAGE_GPU_*</code> <strong class="purple">must</strong> be
+                    supported when using
+                    equivalent Vulkan image parameters.
+                    If a given choice of image parameters are supported for import, they <strong
+                        class="purple">can</strong>
+                    also be used to create an image and memory that will be exported to an
+                    Android hardware buffer.
+                </p>
+            </div>
+            <table id="memory-external-android-hardware-buffer-formats" class="tableblock frame-all grid-all stretch">
+                <caption class="title">Table 13. AHardwareBuffer Format Equivalence</caption>
+                <colgroup>
+                    <col style="width: 50%;">
+                    <col style="width: 50%;">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th class="tableblock halign-left valign-top">AHardwareBuffer Format</th>
+                        <th class="tableblock halign-left valign-top">Vulkan Format</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_R8G8B8A8_UNORM</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM</code>
+                                <sup>1</sup>
+                            </p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_R8G8B8A8_UNORM</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_R8G8B8_UNORM</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_R5G6B5_UNORM_PACK16</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_R16G16B16A16_SFLOAT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_A2B10G10R10_UNORM_PACK32</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_FORMAT_D16_UNORM</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_D16_UNORM</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_FORMAT_D24_UNORM</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_X8_D24_UNORM_PACK32</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_D24_UNORM_S8_UINT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_FORMAT_D32_FLOAT</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_D32_SFLOAT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_D32_SFLOAT_S8_UINT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_FORMAT_S8_UINT</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_S8_UINT</code></p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <table id="memory-external-android-hardware-buffer-usage" class="tableblock frame-all grid-all stretch">
+                <caption class="title">Table 14. AHardwareBuffer Usage Equivalence</caption>
+                <colgroup>
+                    <col style="width: 50%;">
+                    <col style="width: 50%;">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th class="tableblock halign-left valign-top">AHardwareBuffer Usage</th>
+                        <th class="tableblock halign-left valign-top">Vulkan Usage or Creation Flag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock">None</p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_IMAGE_USAGE_TRANSFER_SRC_BIT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock">None</p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_IMAGE_USAGE_TRANSFER_DST_BIT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_IMAGE_USAGE_SAMPLED_BIT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_USAGE_GPU_FRAMEBUFFER</code>
+                                <sup>3</sup>
+                            </p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_USAGE_GPU_FRAMEBUFFER</code>
+                                <sup>3</sup>
+                            </p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT</code>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock">None <sup>2</sup></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_USAGE_PROTECTED_CONTENT</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_IMAGE_CREATE_PROTECTED_BIT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock">None</p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock">None</p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_IMAGE_CREATE_EXTENDED_USAGE_BIT</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER</code>
+                                <sup>4</sup>
+                            </p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_IMAGE_USAGE_STORAGE_BIT</code></p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="dlist">
+                <dl>
+                    <dt class="hdlist1">1</dt>
+                    <dd>
+                        <p>Vulkan does not differentiate between
+                            <code>AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM</code> and
+                            <code>AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM</code>: they both behave as
+                            <code>VK_FORMAT_R8G8B8A8_UNORM</code>.
+                            After an external entity writes to a
+                            <code>AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM</code> Android hardware buffer, the
+                            values read by Vulkan from the X/A component are undefined.
+                            To emulate the traditional behavior of the X component during sampling
+                            or blending, applications <strong class="purple">should</strong> use
+                            <code>VK_COMPONENT_SWIZZLE_ONE</code> in
+                            image view component mappings and <code>VK_BLEND_FACTOR_ONE</code> in color
+                            blend factors.
+                            There is no way to avoid copying these undefined values when copying
+                            from such an image to another image or buffer.
+                        </p>
+                    </dd>
+                    <dt class="hdlist1">2</dt>
+                    <dd>
+                        <p>The <code>AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE</code> flag does not
+                            correspond to a Vulkan image usage or creation flag.
+                            Instead, its presence indicates that the Android hardware buffer
+                            contains a complete mipmap chain, and its absence indicates that the
+                            Android hardware buffer contains only a single mip level.</p>
+                    </dd>
+                    <dt class="hdlist1">3</dt>
+                    <dd>
+                        <p>Only image usages valid for the format are valid.
+                            It would be invalid to take a Android Hardware Buffer with a format of
+                            <code>AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM</code> that has a
+                            <code>AHARDWAREBUFFER_USAGE_GPU_FRAMEBUFFER</code> usage and try to create an
+                            image with <code>VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT</code>.
+                        </p>
+                    </dd>
+                    <dt class="hdlist1">4</dt>
+                    <dd>
+                        <p>In combination with a hardware buffer format other than <code>BLOB</code>.</p>
+                    </dd>
+                </dl>
+            </div>
+            <div class="admonitionblock note">
+                <table>
+                    <tr>
+                        <td class="icon">
+                            <div class="title">Note</div>
+                        </td>
+                        <td class="content">
+                            <div class="paragraph">
+                                <p>When using <code>VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT</code> with Android
+                                    hardware
+                                    buffer images, applications <strong class="purple">should</strong> use
+                                    <a href="#VkImageFormatListCreateInfo">VkImageFormatListCreateInfo</a>
+                                    to
+                                    inform the implementation which view formats will be used with the
+                                    image.
+                                    For some common sets of format, this allows some implementations to
+                                    provide
+                                    significantly better performance when accessing the image via Vulkan.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="sect5">
+            <h6 id="memory-external-android-hardware-buffer-buffer-resources"><a class="anchor"
+                    href="#memory-external-android-hardware-buffer-buffer-resources"></a>Android Hardware
+                Buffer
+                Resources</h6>
+            <div class="paragraph">
+                <p>Android hardware buffers with a format of <code>AHARDWAREBUFFER_FORMAT_BLOB</code>
+                    and usage that includes <code>AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER</code> <strong
+                        class="purple">can</strong> be
+                    used as the backing store for <a href="#VkBuffer">VkBuffer</a> objects.
+                    Such Android hardware buffers have a size in bytes specified by their
+                    <code>width</code>; <code>height</code> and <code>layers</code> are both <code>1</code>.
+                </p>
+            </div>
+            <div class="paragraph">
+                <p>Unlike images, buffer resources backed by Android hardware buffers do not
+                    require dedicated allocations.</p>
+            </div>
+            <div class="paragraph">
+                <p>Exported <a href="#AHardwareBuffer">AHardwareBuffer</a> objects that do not have
+                    dedicated images
+                    <strong class="purple">must</strong> have a format of
+                    <code>AHARDWAREBUFFER_FORMAT_BLOB</code>,
+                    usage <strong class="purple">must</strong> include
+                    <code>AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER</code>, <code>width</code> <strong
+                        class="purple">must</strong> equal the
+                    device memory allocation size, and <code>height</code> and <code>layers</code> <strong
+                        class="purple">must</strong> be <code>1</code>.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="sect4">
+        <h5 id="memory-external-qnx-screen-buffer"><a class="anchor" href="#memory-external-qnx-screen-buffer"></a>QNX
+            Screen Buffer</h5>
+        <div class="paragraph">
+            <p>The QNX SDP defines <code>_screen_buffer</code> objects, which represent a buffer
+                that the QNX Screen graphics subsystem can use directly in its windowing
+                system APIs.
+                More specifically, a Screen buffer is an area of memory that stores pixel
+                data.
+                It can be attached to Screen windows, streams, or pixmaps.
+                These QNX Screen buffer objects <strong class="purple">may</strong> be imported into <a
+                    href="#VkDeviceMemory">VkDeviceMemory</a>
+                objects for access via Vulkan.
+                An <a href="#VkImage">VkImage</a> or <a href="#VkBuffer">VkBuffer</a> <strong
+                    class="purple">can</strong> be bound to the imported
+                <a href="#VkDeviceMemory">VkDeviceMemory</a> object if it is created with
+                <code>VK_EXTERNAL_MEMORY_HANDLE_TYPE_SCREEN_BUFFER_BIT_QNX</code>.
+            </p>
+        </div>
+        <div class="openblock">
+            <div class="content">
+                <div class="paragraph">
+                    <p><code>struct</code> <code>_screen_buffer</code> is strongly typed, so naming the
+                        handle type
+                        is redundant.
+                        The internal layout and therefore size of a <code>struct</code>
+                        <code>_screen_buffer</code>
+                        image may depend on native usage flags that do not have corresponding Vulkan
+                        counterparts.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="sect5">
+            <h6 id="memory-external-screen-buffer-validity"><a class="anchor"
+                    href="#memory-external-screen-buffer-validity"></a>QNX Screen Buffer Validity</h6>
+            <div class="paragraph">
+                <p>The design of Screen in the QNX SDP makes it difficult to determine the
+                    validity of objects from outside of Screen.
+                    Therefore, applications <strong class="purple">must</strong> ensure that QNX Screen
+                    buffer objects
+                    provided
+                    used in various Vulkan interfaces are ones created explicitly with QNX
+                    Screen APIs.
+                    See QNX SDP documentation for more information.</p>
+            </div>
+            <div class="paragraph">
+                <p>A <a href="#VkDeviceMemory">VkDeviceMemory</a> imported from a QNX Screen buffer has no
+                    way to
+                    acquire a reference to its <code>_screen_buffer</code> object.
+                    Therefore, during the host execution of a Vulkan command that has a QNX
+                    Screen buffer as a parameter (including indirect parameters via <code>pNext</code>
+                    chains), the application <strong class="purple">must</strong> ensure that the QNX Screen
+                    buffer
+                    resource
+                    remains valid.</p>
+            </div>
+            <div class="paragraph">
+                <p>Generally, for a <code>_screen_buffer</code> object to be valid for use within a
+                    Vulkan implementation, the buffer object <strong class="purple">should</strong> have a
+                    <code>_screen_buffer</code>::<code>SCREEN_PROPERTY_USAGE</code> that includes at least
+                    one
+                    of: <code>SCREEN_USAGE_VULKAN</code>, <code>SCREEN_USAGE_OPENGL_ES2</code>,
+                    <code>SCREEN_USAGE_OPENGL_ES3</code>, or <code>SCREEN_USAGE_NATIVE</code>.
+                    The exact Screen-native usage flags required depends on the Vulkan
+                    implementation, and QNX Screen itself will not necessarily enforce these
+                    requirements.
+                    Note that Screen-native usage flags are in no way related to usage flags in
+                    the Vulkan specification.
+                </p>
+            </div>
+        </div>
+        <div class="sect5">
+            <h6 id="memory-external-screen-buffer-external-formats"><a class="anchor"
+                    href="#memory-external-screen-buffer-external-formats"></a>QNX Screen Buffer External
+                Formats</h6>
+            <div class="paragraph">
+                <p>QNX Screen buffers <strong class="purple">may</strong> represent images using
+                    implementation-specific
+                    formats, layouts, color models, etc., which do not have Vulkan equivalents.
+                    Such <em>external formats</em> are commonly used by external image sources such as
+                    video decoders or cameras.
+                    Vulkan <strong class="purple">can</strong> import QNX Screen buffers that have external
+                    formats, but
+                    since
+                    the image contents are in an undiscoverable and possibly proprietary
+                    representation, images with external formats <strong class="purple">must</strong> only
+                    be used as
+                    sampled
+                    images, <strong class="purple">must</strong> only be sampled with a sampler that has
+                    Y′C<sub>B</sub>C<sub>R</sub> conversion
+                    enabled, and <strong class="purple">must</strong> have optimal tiling.</p>
+            </div>
+            <div class="paragraph">
+                <p>Images that will be backed by a QNX Screen buffer <strong class="purple">can</strong> use
+                    an
+                    external
+                    format by setting <a href="#VkImageCreateInfo">VkImageCreateInfo</a>::<code>format</code> to
+                    <code>VK_FORMAT_UNDEFINED</code> and including a <a
+                        href="#VkExternalFormatQNX">VkExternalFormatQNX</a>
+                    structure in the <code>pNext</code> chain.
+                    Images <strong class="purple">can</strong> be created with an external format even if
+                    the QNX Screen
+                    buffer
+                    has a format which has an
+                    <a href="#memory-external-qnx-screen-buffer-formats">equivalent Vulkan format</a> to
+                    enable consistent handling of images from sources that might use either
+                    category of format.
+                    The external format of a QNX Screen buffer <strong class="purple">can</strong> be
+                    obtained by
+                    passing a
+                    <a href="#VkScreenBufferFormatPropertiesQNX">VkScreenBufferFormatPropertiesQNX</a>
+                    structure to
+                    <a href="#vkGetScreenBufferPropertiesQNX">vkGetScreenBufferPropertiesQNX</a>.
+                </p>
+            </div>
+        </div>
+        <div class="sect5">
+            <h6 id="memory-external-qnx-screen-buffer-image-resources"><a class="anchor"
+                    href="#memory-external-qnx-screen-buffer-image-resources"></a>QNX Screen Buffer Image
+                Resources</h6>
+            <div class="paragraph">
+                <p>QNX Screen buffers have intrinsic width, height, format, and usage
+                    properties, so Vulkan images bound to memory imported from a QNX Screen
+                    buffer <strong class="purple">must</strong> use dedicated allocations:
+                    <code>VkMemoryDedicatedRequirements</code>::<code>requiresDedicatedAllocation</code>
+                    <strong class="purple">must</strong>
+                    be <code>VK_TRUE</code> for images created with
+                    <a
+                        href="#VkExternalMemoryImageCreateInfo">VkExternalMemoryImageCreateInfo</a>::<code>handleTypes</code>
+                    that includes
+                    <code>VK_EXTERNAL_MEMORY_HANDLE_TYPE_SCREEN_BUFFER_BIT_QNX</code>.
+                    When creating an image that will be bound to an imported QNX Screen buffer,
+                    the image creation parameters <strong class="purple">must</strong> be equivalent to the
+                    <code>_screen_buffer</code>
+                    properties as described by the valid usage of <a
+                        href="#VkMemoryAllocateInfo">VkMemoryAllocateInfo</a>.
+                </p>
+            </div>
+            <table id="memory-external-qnx-screen-buffer-formats" class="tableblock frame-all grid-all stretch">
+                <caption class="title">Table 15. QNX Screen Buffer Format Equivalence</caption>
+                <colgroup>
+                    <col style="width: 50%;">
+                    <col style="width: 50%;">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th class="tableblock halign-left valign-top">QNX Screen Format</th>
+                        <th class="tableblock halign-left valign-top">Vulkan Format</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>SCREEN_FORMAT_RGBA8888</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_B8G8R8A8_UNORM</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>SCREEN_FORMAT_RGBX8888</code> <sup>1</sup></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_B8G8R8A8_UNORM</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>SCREEN_FORMAT_BGRA8888</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_R8G8B8A8_UNORM</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>SCREEN_FORMAT_BGRX8888</code> <sup>1</sup></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_R8G8B8A8_UNORM</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>SCREEN_FORMAT_RGBA1010102</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_A2R10G10B10_UNORM_PACK32</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>SCREEN_FORMAT_RGBX1010102</code> <sup>1</sup></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_A2R10G10B10_UNORM_PACK32</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>SCREEN_FORMAT_BGRA1010102</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_A2B10G10R10_UNORM_PACK32</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>SCREEN_FORMAT_BGRX1010102</code> <sup>1</sup></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_A2B10G10R10_UNORM_PACK32</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>SCREEN_FORMAT_RGBA5551</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_A1R5G5B5_UNORM_PACK16</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>SCREEN_FORMAT_RGBX5551</code> <sup>1</sup></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_A1R5G5B5_UNORM_PACK16</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>SCREEN_FORMAT_RGB565</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_R5G6B5_UNORM_PACK16</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>SCREEN_FORMAT_RGB888</code></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top">
+                            <p class="tableblock"><code>VK_FORMAT_R8G8B8_UNORM</code></p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="dlist">
+                <dl>
+                    <dt class="hdlist1">1</dt>
+                    <dd>
+                        <p>Vulkan does not differentiate between <code>SCREEN_FORMAT_RGBA8888</code> and
+                            <code>SCREEN_FORMAT_RGBX8888</code>: they both behave as
+                            <code>VK_FORMAT_R8G8B8A8_UNORM</code>.
+                            After an external entity writes to a <code>SCREEN_FORMAT_RGBX8888</code> QNX
+                            Screen buffer, the values read by Vulkan from the X/A component are
+                            undefined.
+                            To emulate the traditional behavior of the X component during sampling
+                            or blending, applications <strong class="purple">should</strong> use
+                            <code>VK_COMPONENT_SWIZZLE_ONE</code> in
+                            image view component mappings and <code>VK_BLEND_FACTOR_ONE</code> in color
+                            blend factors.
+                            There is no way to avoid copying these undefined values when copying
+                            from such an image to another image or buffer.
+                            The same behavior applies to the following pairs:
+                            <code>SCREEN_FORMAT_BGRA8888</code> and <code>SCREEN_FORMAT_BGRX8888</code>,
+                            <code>SCREEN_FORMAT_RGBA1010102</code> and
+                            <code>SCREEN_FORMAT_RGBX1010102</code>,
+                            <code>SCREEN_FORMAT_BGRA1010102</code> and
+                            <code>SCREEN_FORMAT_BGRX1010102</code>,
+                            <code>SCREEN_FORMAT_RGBA5551</code> and <code>SCREEN_FORMAT_RGBX5551</code>
+                        </p>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>

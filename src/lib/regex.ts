@@ -1,0 +1,1 @@
+export const openBlockRegex=new RegExp(/<div.*?openblock.*>/g);

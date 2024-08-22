@@ -1,0 +1,80 @@
+<div class="content">
+  <pre class="rouge highlight">
+    <code data-lang="c++">
+      <span class="c1">// Provided by VK_VERSION_1_0</span>
+      <span class="k">typedef</span><span class="k">enum</span><span class="n">VkFormatFeatureFlagBits</span><span class="p">{</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT</span><span class="o">=</span><span class="mh">0x00000001</span><span class="p">,</span>
+      <span class="n">VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT</span><span class="o">=</span><span class="mh">0x00000002</span><span class="p">,</span>
+      <span class="n">VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT</span><span class="o">=</span><span class="mh">0x00000004</span><span class="p">,</span>
+      <span class="n">VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT</span><span class="o">=</span><span class="mh">0x00000008</span><span class="p">,</span>
+      <span class="n">VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_BIT</span><span class="o">=</span><span class="mh">0x00000010</span><span class="p">,</span>
+      <span class="n">VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_ATOMIC_BIT</span><span class="o">=</span><span class="mh">0x00000020</span><span class="p">,</span>
+      <span class="n">VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT</span><span class="o">=</span><span class="mh">0x00000040</span><span class="p">,</span>
+      <span class="n">VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT</span><span class="o">=</span><span class="mh">0x00000080</span><span class="p">,</span>
+      <span class="n">VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT</span><span class="o">=</span><span class="mh">0x00000100</span><span class="p">,</span>
+      <span class="n">VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT</span><span class="o">=</span><span class="mh">0x00000200</span><span class="p">,</span>
+      <span class="n">VK_FORMAT_FEATURE_BLIT_SRC_BIT</span><span class="o">=</span><span class="mh">0x00000400</span><span class="p">,</span>
+      <span class="n">VK_FORMAT_FEATURE_BLIT_DST_BIT</span><span class="o">=</span><span class="mh">0x00000800</span><span class="p">,</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT</span><span class="o">=</span><span class="mh">0x00001000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_VERSION_1_1</span>
+      <span class="n">VK_FORMAT_FEATURE_TRANSFER_SRC_BIT</span><span class="o">=</span><span class="mh">0x00004000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_VERSION_1_1</span>
+      <span class="n">VK_FORMAT_FEATURE_TRANSFER_DST_BIT</span><span class="o">=</span><span class="mh">0x00008000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_VERSION_1_1</span>
+      <span class="n">VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT</span><span class="o">=</span><span class="mh">0x00020000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_VERSION_1_1</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_LINEAR_FILTER_BIT</span><span class="o">=</span><span class="mh">0x00040000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_VERSION_1_1</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_SEPARATE_RECONSTRUCTION_FILTER_BIT</span><span class="o">=</span><span class="mh">0x00080000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_VERSION_1_1</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_BIT</span><span class="o">=</span><span class="mh">0x00100000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_VERSION_1_1</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_FORCEABLE_BIT</span><span class="o">=</span><span class="mh">0x00200000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_VERSION_1_1</span>
+      <span class="n">VK_FORMAT_FEATURE_DISJOINT_BIT</span><span class="o">=</span><span class="mh">0x00400000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_VERSION_1_1</span>
+      <span class="n">VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT</span><span class="o">=</span><span class="mh">0x00800000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_VERSION_1_2</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_MINMAX_BIT</span><span class="o">=</span><span class="mh">0x00010000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_video_decode_queue</span>
+      <span class="n">VK_FORMAT_FEATURE_VIDEO_DECODE_OUTPUT_BIT_KHR</span><span class="o">=</span><span class="mh">0x02000000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_video_decode_queue</span>
+      <span class="n">VK_FORMAT_FEATURE_VIDEO_DECODE_DPB_BIT_KHR</span><span class="o">=</span><span class="mh">0x04000000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_acceleration_structure</span>
+      <span class="n">VK_FORMAT_FEATURE_ACCELERATION_STRUCTURE_VERTEX_BUFFER_BIT_KHR</span><span class="o">=</span><span class="mh">0x20000000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_EXT_filter_cubic</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_EXT</span><span class="o">=</span><span class="mh">0x00002000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_EXT_fragment_density_map</span>
+      <span class="n">VK_FORMAT_FEATURE_FRAGMENT_DENSITY_MAP_BIT_EXT</span><span class="o">=</span><span class="mh">0x01000000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_fragment_shading_rate</span>
+      <span class="n">VK_FORMAT_FEATURE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR</span><span class="o">=</span><span class="mh">0x40000000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_video_encode_queue</span>
+      <span class="n">VK_FORMAT_FEATURE_VIDEO_ENCODE_INPUT_BIT_KHR</span><span class="o">=</span><span class="mh">0x08000000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_video_encode_queue</span>
+      <span class="n">VK_FORMAT_FEATURE_VIDEO_ENCODE_DPB_BIT_KHR</span><span class="o">=</span><span class="mh">0x10000000</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_IMG_filter_cubic</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG</span><span class="o">=</span><span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_EXT</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_maintenance1</span>
+      <span class="n">VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR</span><span class="o">=</span><span class="n">VK_FORMAT_FEATURE_TRANSFER_SRC_BIT</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_maintenance1</span>
+      <span class="n">VK_FORMAT_FEATURE_TRANSFER_DST_BIT_KHR</span><span class="o">=</span><span class="n">VK_FORMAT_FEATURE_TRANSFER_DST_BIT</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_EXT_sampler_filter_minmax</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_MINMAX_BIT_EXT</span><span class="o">=</span><span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_MINMAX_BIT</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_sampler_ycbcr_conversion</span>
+      <span class="n">VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT_KHR</span><span class="o">=</span><span class="n">VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_sampler_ycbcr_conversion</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_LINEAR_FILTER_BIT_KHR</span><span class="o">=</span><span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_LINEAR_FILTER_BIT</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_sampler_ycbcr_conversion</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_SEPARATE_RECONSTRUCTION_FILTER_BIT_KHR</span><span class="o">=</span><span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_SEPARATE_RECONSTRUCTION_FILTER_BIT</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_sampler_ycbcr_conversion</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_BIT_KHR</span><span class="o">=</span><span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_BIT</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_sampler_ycbcr_conversion</span>
+      <span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_FORCEABLE_BIT_KHR</span><span class="o">=</span><span class="n">VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_FORCEABLE_BIT</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_sampler_ycbcr_conversion</span>
+      <span class="n">VK_FORMAT_FEATURE_DISJOINT_BIT_KHR</span><span class="o">=</span><span class="n">VK_FORMAT_FEATURE_DISJOINT_BIT</span><span class="p">,</span>
+      <span class="c1">// Provided by VK_KHR_sampler_ycbcr_conversion</span>
+      <span class="n">VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT_KHR</span><span class="o">=</span><span class="n">VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT</span><span class="p">,</span>
+      <span class="p">}</span><span class="n">VkFormatFeatureFlagBits</span><span class="p">;</span>
+    </code>
+  </pre>
+</div>

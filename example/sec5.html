@@ -1,0 +1,53 @@
+<div class="sect5">
+    <h6 id="memory-external-android-hardware-buffer-optimal-usages"><a class="anchor"
+            href="#memory-external-android-hardware-buffer-optimal-usages"></a>Android Hardware
+        Buffer Optimal
+        Usages</h6>
+    <div class="paragraph">
+        <p>Vulkan buffer and image usage flags do not correspond exactly to Android
+            hardware buffer usage flags.
+            When allocating Android hardware buffers with non-Vulkan APIs, if any
+            <code>AHARDWAREBUFFER_USAGE_GPU_*</code> usage bits are included, by default the
+            allocator <strong class="purple">must</strong> allocate the memory in such a way that it
+            supports
+            Vulkan
+            usages and creation flags in the
+            <a href="#memory-external-android-hardware-buffer-usage">usage equivalence table</a>
+            which do not have Android hardware buffer equivalents.
+        </p>
+    </div>
+    <div class="paragraph">
+        <p>An <a href="#VkAndroidHardwareBufferUsageANDROID">VkAndroidHardwareBufferUsageANDROID</a>
+            structure
+            <strong class="purple">can</strong> be included in
+            the <code>pNext</code> chain of a <a href="#VkImageFormatProperties2">VkImageFormatProperties2</a>
+            structure passed
+            to <a href="#vkGetPhysicalDeviceImageFormatProperties2">vkGetPhysicalDeviceImageFormatProperties2</a>
+            to
+            obtain optimal Android
+            hardware buffer usage flags for specific Vulkan resource creation
+            parameters.
+            Some usage flags returned by these commands are <strong class="purple">required</strong>
+            based on
+            the input
+            parameters, but additional vendor-specific usage flags
+            (<code>AHARDWAREBUFFER_USAGE_VENDOR_*</code>) <strong class="purple">may</strong> also
+            be returned.
+            Any Android hardware buffer allocated with these vendor-specific usage flags
+            and imported to Vulkan <strong class="purple">must</strong> only be bound to resources
+            created with
+            parameters that are a subset of the parameters used to obtain the Android
+            hardware buffer usage, since the memory <strong class="purple">may</strong> have been
+            allocated in a
+            way
+            incompatible with other parameters.
+            If an Android hardware buffer is successfully allocated with additional
+            non-vendor-specific usage flags in addition to the recommended usage, it
+            <strong class="purple">must</strong> support being used in the same ways as an Android
+            hardware
+            buffer
+            allocated with only the recommended usage, and also in ways indicated by the
+            additional usage.
+        </p>
+    </div>
+</div>

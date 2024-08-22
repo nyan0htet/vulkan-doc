@@ -1,0 +1,19 @@
+<div class="content">
+    <pre class="rouge highlight">
+        <code data-lang="c++">
+            <span class="c1">// Provided by VK_EXT_descriptor_buffer</span>
+            <span class="k">typedef</span><span class="k">union</span><span class="n">VkDescriptorDataEXT</span><span class="p">{</span>
+            <span class="k">const</span><span class="n">VkSampler</span><span class="o">*</span><span class="n">pSampler</span><span class="p">;</span>
+            <span class="k">const</span><span class="n">VkDescriptorImageInfo</span><span class="o">*</span><span class="n">pCombinedImageSampler</span><span class="p">;</span>
+            <span class="k">const</span><span class="n">VkDescriptorImageInfo</span><span class="o">*</span><span class="n">pInputAttachmentImage</span><span class="p">;</span>
+            <span class="k">const</span><span class="n">VkDescriptorImageInfo</span><span class="o">*</span><span class="n">pSampledImage</span><span class="p">;</span>
+            <span class="k">const</span><span class="n">VkDescriptorImageInfo</span><span class="o">*</span><span class="n">pStorageImage</span><span class="p">;</span>
+            <span class="k">const</span><span class="n">VkDescriptorAddressInfoEXT</span><span class="o">*</span><span class="n">pUniformTexelBuffer</span><span class="p">;</span>
+            <span class="k">const</span><span class="n">VkDescriptorAddressInfoEXT</span><span class="o">*</span><span class="n">pStorageTexelBuffer</span><span class="p">;</span>
+            <span class="k">const</span><span class="n">VkDescriptorAddressInfoEXT</span><span class="o">*</span><span class="n">pUniformBuffer</span><span class="p">;</span>
+            <span class="k">const</span><span class="n">VkDescriptorAddressInfoEXT</span><span class="o">*</span><span class="n">pStorageBuffer</span><span class="p">;</span>
+            <span class="n">VkDeviceAddress</span><span class="n">accelerationStructure</span><span class="p">;</span>
+            <span class="p">}</span><span class="n">VkDescriptorDataEXT</span><span class="p">;</span>
+        </code>
+    </pre>
+</div>

@@ -1,0 +1,14 @@
+<div class="paragraph">
+    <p>If a non-<code>NULL</code> allocator is used, the <code>pfnAllocation</code>,
+        <code>pfnReallocation</code> and <code>pfnFree</code> members <strong class="purple">must</strong>
+        be
+        non-<code>NULL</code> and
+        point to valid implementations of the callbacks.
+        An application <strong class="purple">can</strong> choose to not provide informational callbacks by
+        setting
+        both <code>pfnInternalAllocation</code> and <code>pfnInternalFree</code> to <code>NULL</code>.
+        <code>pfnInternalAllocation</code> and <code>pfnInternalFree</code> <strong class="purple">must</strong>
+        either both be
+        <code>NULL</code> or both be non-<code>NULL</code>.
+    </p>
+</div>
