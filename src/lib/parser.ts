@@ -1,11 +1,10 @@
 import { workerData, Worker } from "worker_threads";
-import type { DocData, Optional } from "../type";
-import type { NoteT } from "../notes/notes";
 import { Progress, type ParsedDetails } from "./console";
 import { readFile, writeFile } from "fs/promises";
+import type { ReportedKnownData } from "../worker/openblock-types";
 
 export type MsgWMParsed = { type: "parsed", total: number, parsed: number, ob: number, obParsed: number, parsedDetails: ParsedDetails };
-export type MsgWMCompleted = { type: "completed",parsed:MsgWMParsed, unknownSect1Class: string[],unknownSect2Class: string[],unknownSect3Class: string[],unknownSect4Class: string[],unknownOBClass: string[],unknownLBClass: string[]};
+export type MsgWMCompleted = { type: "completed", parsed: MsgWMParsed, unknownSect1Class: string[], unknownSect2Class: string[], unknownSect3Class: string[], unknownSect4Class: string[], unknownOBClass: string[], unknownLBClass: string[], reportedKnownData: ReportedKnownData };
 type MsgWM = MsgWMParsed | MsgWMCompleted | { type: "working" };
 export type MsgMWJob = { type: "job", data: string[] };
 export type MsgMW = MsgMWJob;
@@ -47,11 +46,11 @@ export function createBarrier(waitNo: number) {
     };
     return { promise: readyPromise, cb: remainedCb };
 }
-const debugUnknownClass = async (gConfig:GlobalConfig,parser:ParserWorker[],sectionLevel:1|2|3|4) => {
+const debugUnknownClass = async (gConfig: GlobalConfig, parser: ParserWorker[], sectionLevel: 1 | 2 | 3 | 4) => {
     const unknownClass: string[] = [];
-    const sectionLevelStr=`unknownSect${sectionLevel}Class`;
+    const sectionLevelStr = `unknownSect${sectionLevel}Class`;
     parser.forEach(wk => {
-        const parserUnknownClass=wk[`unknownSect${sectionLevel}Class`];
+        const parserUnknownClass = wk[`unknownSect${sectionLevel}Class`];
         if (parserUnknownClass && parserUnknownClass.length > 0) {
             parserUnknownClass.forEach(className => {
                 if (unknownClass.indexOf(className) === -1) {
@@ -62,10 +61,10 @@ const debugUnknownClass = async (gConfig:GlobalConfig,parser:ParserWorker[],sect
     })
     if (unknownClass.length > 0) await writeFile(`${gConfig.debugRoot}/${sectionLevelStr}.txt`, unknownClass.join(","));
 }
-const debugOBUnknownClass = async (gConfig:GlobalConfig,parser:ParserWorker[]) => {
+const debugOBUnknownClass = async (gConfig: GlobalConfig, parser: ParserWorker[]) => {
     const unknownClass: string[] = [];
     parser.forEach(wk => {
-        const parserUnknownClass=wk.unknownOBClass;
+        const parserUnknownClass = wk.unknownOBClass;
         if (parserUnknownClass && parserUnknownClass.length > 0) {
             parserUnknownClass.forEach(className => {
                 if (unknownClass.indexOf(className) === -1) {
@@ -76,10 +75,10 @@ const debugOBUnknownClass = async (gConfig:GlobalConfig,parser:ParserWorker[]) =
     })
     if (unknownClass.length > 0) await writeFile(`${gConfig.debugRoot}/unknownOBClass.txt`, unknownClass.join(","));
 }
-const debugLBUnknownClass = async (gConfig:GlobalConfig,parser:ParserWorker[]) => {
+const debugLBUnknownClass = async (gConfig: GlobalConfig, parser: ParserWorker[]) => {
     const unknownClass: string[] = [];
     parser.forEach(wk => {
-        const parserUnknownClass=wk.unknownLBClass;
+        const parserUnknownClass = wk.unknownLBClass;
         if (parserUnknownClass && parserUnknownClass.length > 0) {
             parserUnknownClass.forEach(className => {
                 if (unknownClass.indexOf(className) === -1) {
@@ -90,22 +89,22 @@ const debugLBUnknownClass = async (gConfig:GlobalConfig,parser:ParserWorker[]) =
     })
     if (unknownClass.length > 0) await writeFile(`${gConfig.debugRoot}/unknownLBClass.txt`, unknownClass.join(","));
 }
-export const debugParsedDetails=async (gConfig:GlobalConfig,parser:ParserWorker[])=>{
-    const parseDetails:ParsedDetails=structuredClone(parser[0].parseDetails);
-    for(let parserCounter=1;parserCounter<parser.length;parserCounter++){
-        const curParser=parser[parserCounter];
-        parseDetails.struct=parseDetails.struct.concat(curParser.parseDetails.struct);
-        parseDetails.union=parseDetails.union.concat(curParser.parseDetails.union);
-        parseDetails.enum=parseDetails.enum.concat(curParser.parseDetails.enum);
-        parseDetails.alias=parseDetails.alias.concat(curParser.parseDetails.alias);
-        parseDetails.funcPointer=parseDetails.funcPointer.concat(curParser.parseDetails.funcPointer);
-        parseDetails.handle=parseDetails.handle.concat(curParser.parseDetails.handle);
-        parseDetails.macro=parseDetails.macro.concat(curParser.parseDetails.macro);
-        parseDetails.macroFunc=parseDetails.macroFunc.concat(curParser.parseDetails.macroFunc);
-        parseDetails.command=parseDetails.command.concat(curParser.parseDetails.command);
+export const debugParsedDetails = async (gConfig: GlobalConfig, parser: ParserWorker[]) => {
+    const parseDetails: ParsedDetails = structuredClone(parser[0].parseDetails);
+    for (let parserCounter = 1; parserCounter < parser.length; parserCounter++) {
+        const curParser = parser[parserCounter];
+        parseDetails.struct = parseDetails.struct.concat(curParser.parseDetails.struct);
+        parseDetails.union = parseDetails.union.concat(curParser.parseDetails.union);
+        parseDetails.enum = parseDetails.enum.concat(curParser.parseDetails.enum);
+        parseDetails.alias = parseDetails.alias.concat(curParser.parseDetails.alias);
+        parseDetails.funcPointer = parseDetails.funcPointer.concat(curParser.parseDetails.funcPointer);
+        parseDetails.handle = parseDetails.handle.concat(curParser.parseDetails.handle);
+        parseDetails.macro = parseDetails.macro.concat(curParser.parseDetails.macro);
+        parseDetails.macroFunc = parseDetails.macroFunc.concat(curParser.parseDetails.macroFunc);
+        parseDetails.command = parseDetails.command.concat(curParser.parseDetails.command);
     }
-    for(const [arrName,arr] of Object.entries(parseDetails)){
-        await writeFile(`${gConfig.debugRoot}/parsed-${arrName}.txt`,arr.join("\n"));
+    for (const [arrName, arr] of Object.entries(parseDetails)) {
+        await writeFile(`${gConfig.debugRoot}/parsed-${arrName}.txt`, arr.join("\n"));
     }
 }
 export class ParserWorker {
@@ -124,7 +123,9 @@ export class ParserWorker {
     unknownSect4Class!: string[];
     unknownOBClass!: string[];
     unknownLBClass!: string[];
-    parseDetails!:ParsedDetails;
+    parseDetails!: ParsedDetails;
+
+    reportedKnownData!: ReportedKnownData;
     // for data
 
     static async create(gObj: GlobalObj, gConfig: GlobalConfig, workerFile: URL): Promise<ParserWorker[]> {
@@ -147,7 +148,7 @@ export class ParserWorker {
         await onlineBarrier.promise;
         return retArr;
     }
-    static async parse(gObj: GlobalObj, gConfig: GlobalConfig, parser: ParserWorker[], srcFile: string, note: NoteT): Promise<DocData> {
+    static async parse(gObj: GlobalObj, gConfig: GlobalConfig, parser: ParserWorker[], srcFile: string): Promise<ReportedKnownData> {
         const data = await readFile(srcFile, "utf-8");
         const progress = gObj.progress;
         const completedBarrier = createBarrier(parser.length);
@@ -166,15 +167,32 @@ export class ParserWorker {
         }
         await completedBarrier.promise;
         if (gConfig.isDebug) {
-            debugUnknownClass(gConfig,parser,1);
-            debugUnknownClass(gConfig,parser,2);
-            debugUnknownClass(gConfig,parser,3);
-            debugUnknownClass(gConfig,parser,4);
-            debugOBUnknownClass(gConfig,parser);
-            debugLBUnknownClass(gConfig,parser);
-            debugParsedDetails(gConfig,parser);
+            debugUnknownClass(gConfig, parser, 1);
+            debugUnknownClass(gConfig, parser, 2);
+            debugUnknownClass(gConfig, parser, 3);
+            debugUnknownClass(gConfig, parser, 4);
+            debugOBUnknownClass(gConfig, parser);
+            debugLBUnknownClass(gConfig, parser);
+            debugParsedDetails(gConfig, parser);
         }
-        const parsedData = {} as DocData;
+        const parsedData: ReportedKnownData = {
+            Struct: {},
+            Union: {},
+            Enum: {},
+            Alias: {},
+            FuncPointer: {},
+            Handle: {},
+            Macro: {},
+            MacroFunc: {},
+            Command: {}
+        };
+        const keyArr=Object.keys(parser[0].reportedKnownData) as unknown as keyof ReportedKnownData;
+        for (let counter=0;counter<keyArr.length;counter++) {
+            const typeName=keyArr[counter] as keyof ReportedKnownData;
+            for (const ps of parser) {
+                parsedData[typeName]={...parsedData[typeName],...ps.reportedKnownData[typeName]}
+            }
+        }
         return parsedData;
     }
     sendJob(msg: MsgMW) {
@@ -211,7 +229,8 @@ export class ParserWorker {
                 this.unknownSect4Class = msg.unknownSect4Class;
                 this.unknownOBClass = msg.unknownOBClass;
                 this.unknownLBClass = msg.unknownLBClass;
-                this.parseDetails=msg.parsed.parsedDetails;
+                this.parseDetails = msg.parsed.parsedDetails;
+                this.reportedKnownData = msg.reportedKnownData;
                 this.completedCb(this.id, true);
                 break;
             }

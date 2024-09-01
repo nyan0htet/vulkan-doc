@@ -30,6 +30,7 @@ export class Progress {
     progressLine = 1;
     isNeedToPrint = false;
     isNeedToStop = false;
+    stopCallback!:()=>void;
     bufferMessage = "";
     interVal!: ReturnType<typeof setInterval>;
     static create(noOfWorkers: number): Progress {
@@ -130,10 +131,17 @@ export class Progress {
             this.#realPrint();
             this.bufferMessage = "";
             this.isNeedToPrint = false;
-            if (this.isNeedToStop) clearInterval(this.interVal);
+            if (this.isNeedToStop){
+                clearInterval(this.interVal);
+                this.stopCallback();
+            } 
         }
     }
-    stop() {
+    async stop():Promise<void> {
+        if(this.isNeedToStop) return;
         this.isNeedToStop = true;
+        new Promise((resolv)=>{
+            this.stopCallback=resolv as Progress["stopCallback"];
+        })
     }
 }

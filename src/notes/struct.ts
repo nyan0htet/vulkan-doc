@@ -1,3 +1,4 @@
-import type { StructNoteListT } from "./notes";
+import type { LStruct } from "../worker/openblock-types";
+import type { NoteMember } from "./notes";
 
-export const structNoteList:StructNoteListT={};
+export const structNoteList:NoteMember<LStruct>={};

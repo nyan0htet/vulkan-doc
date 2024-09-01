@@ -1,15 +1,15 @@
 import { MessagePort, parentPort, workerData } from "worker_threads";
 import type { MsgMW, MsgWMCompleted, MsgWMParsed, WKData } from "../lib/parser";
-import type { DocData } from "../type";
 import { classifyTag, parseTag, type HtmlTag, type Openblock } from "./parser-html";
 import { mkdir, writeFile } from "fs/promises";
 import { parseSect1 } from "./parser-sect1";
 import type { TagExplanation, TagExplanationCol } from "./parser-sect";
 import { classifyOpenblock } from "./classify-openblock";
-import { debugExplanation, debugOpenBlock, debugUnknownClass } from "./worker-lib";
+import { debugExplanation, debugOpenBlock, debugReportedKnownData, debugUnknownClass } from "./worker-lib";
+import type { ReportedKnownData, ReportedUnknownData } from "./openblock-types";
 const parent = parentPort as MessagePort;
 const wkData: WKData = workerData;
-export type WKConfig = { doc: DocData, status: MsgWMParsed, parent: MessagePort, reportFreq: number } & WKData & {
+export type WKConfig = {  status: MsgWMParsed, parent: MessagePort, reportFreq: number } & WKData & {
     wkDebugDir: string,
     wkDebugSect1Dir: string,
     wkDebugOpenblockDir: string,
@@ -18,16 +18,17 @@ export type WKConfig = { doc: DocData, status: MsgWMParsed, parent: MessagePort,
     unknownSect2Class: string[],
     unknownSect3Class: string[],
     unknownSect4Class: string[],
-    unknownOpenblockClass:string[],
-    unknownListingblockClass:string[],
+    unknownOpenblockClass: string[],
+    unknownListingblockClass: string[],
 } &
 {
-    tagExpalantion: TagExplanationCol
+    tagExpalantion: TagExplanationCol,
+    reportedKnownData: ReportedKnownData,
+    reportedUnknownData: ReportedUnknownData,
 }
     ;
 const wkConfig: WKConfig = {
-    doc: { struct: {} },
-    status: { type: "parsed", total: 0, parsed: 0, ob: 0, obParsed: 0, parsedDetails: { struct: [],union:[],enum:[],alias:[],funcPointer:[],handle:[],macro:[],macroFunc:[],command:[] } },
+    status: { type: "parsed", total: 0, parsed: 0, ob: 0, obParsed: 0, parsedDetails: { struct: [], union: [], enum: [], alias: [], funcPointer: [], handle: [], macro: [], macroFunc: [], command: [] } },
     parent,
     reportFreq: 10,
     ...wkData,
@@ -39,9 +40,21 @@ const wkConfig: WKConfig = {
     unknownSect2Class: [],
     unknownSect3Class: [],
     unknownSect4Class: [],
-    unknownOpenblockClass:[],
-    unknownListingblockClass:[],
+    unknownOpenblockClass: [],
+    unknownListingblockClass: [],
     tagExpalantion: {},
+    reportedKnownData: {
+        Struct: {},
+        Union: {},
+        Enum: {},
+        Alias: {},
+        FuncPointer: {},
+        Handle: {},
+        Macro: {},
+        MacroFunc: {},
+        Command: {}
+    },
+    reportedUnknownData: []
 };
 wkConfig.wkDebugSect1Dir = `${wkConfig.wkDebugDir}/sect1`;
 wkConfig.wkDebugOpenblockDir = `${wkConfig.wkDebugDir}/openblock`;
@@ -61,7 +74,7 @@ parent.on("message", async (msg: MsgMW) => {
             }
             // parsing text properties.
             for (let sect1Counter = 0; sect1Counter < sect1.length; sect1Counter++) {
-                sect1[sect1Counter]=sect1[sect1Counter].replaceAll(/<svg[\s\S\n]*?svg>/g,(match:string)=>{return `<img class="imageElement" src="data:image/svg+xml;base64,${Buffer.from(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>${match}`).toString("base64")}"/>`});
+                sect1[sect1Counter] = sect1[sect1Counter].replaceAll(/<svg[\s\S\n]*?svg>/g, (match: string) => { return `<img class="imageElement" src="data:image/svg+xml;base64,${Buffer.from(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>${match}`).toString("base64")}"/>` });
                 const parsedTags = await parseTag(wkConfig, sect1[sect1Counter], sect1Counter);
                 sect1Tags[sect1Counter] = parsedTags;
             }
@@ -71,13 +84,19 @@ parent.on("message", async (msg: MsgMW) => {
                 await parseSect1(wkConfig, { openblock, source: sect1[sectionIndex], sourceTags: sect1Tags[sectionIndex], sectionIndex });
             }
             // parsing openblock.
-            await classifyOpenblock(wkConfig, { openblock, sectTags: sect1Tags,sectArr:sect1 });
+            await classifyOpenblock(wkConfig, { openblock, sectTags: sect1Tags, sectArr: sect1 });
             if (wkData.gConfig.isDebug) {
                 await debugUnknownClass(wkConfig);
-                await debugOpenBlock(wkConfig,openblock,sect1Tags);
+                await debugOpenBlock(wkConfig, openblock, sect1Tags);
                 await debugExplanation(wkConfig);
+                await debugReportedKnownData(wkConfig)
             }
-            const completedMsg: MsgWMCompleted = { type: "completed",parsed:wkConfig.status, unknownSect1Class: wkConfig.unknownSect1Class, unknownSect2Class: wkConfig.unknownSect2Class, unknownSect3Class: wkConfig.unknownSect3Class, unknownSect4Class: wkConfig.unknownSect4Class,unknownOBClass:wkConfig.unknownOpenblockClass,unknownLBClass:wkConfig.unknownListingblockClass };
+            const completedMsg: MsgWMCompleted = {
+                type: "completed",
+                parsed: wkConfig.status,
+                unknownSect1Class: wkConfig.unknownSect1Class, unknownSect2Class: wkConfig.unknownSect2Class, unknownSect3Class: wkConfig.unknownSect3Class, unknownSect4Class: wkConfig.unknownSect4Class, unknownOBClass: wkConfig.unknownOpenblockClass, unknownLBClass: wkConfig.unknownListingblockClass,
+                reportedKnownData:wkConfig.reportedKnownData
+            };
             parent.postMessage(completedMsg);
             break;
         }

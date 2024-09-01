@@ -1,31 +1,47 @@
 import type { Openblock } from "./parser-html";
 
-export type OBExplanation = { code: string[], text: string }; // code is keywords
-export type OBGeneral = { preExplanation: OBExplanation[], postExplanation: OBExplanation[], name: string };
-export type OBGeneralMember = { name: string, comment: string, explanation: OBExplanation };
+// LRelated=keyword or link
+export type LRelated=["kw",string] | ["a",string,string];
+export type LExplanation = { related: LRelated[], plainTxt: string }; // code is keywords
+export type LGeneral = {
+    name: string, comment: string[], same: LMemberPre[], extra: {
+        "hostSync": ListingBlock["hostSync"]
+        "hostAccess": ListingBlock["hostAccess"]
+        "commandProperties": ListingBlock["commandProperties"]
+        "paragraph": ListingBlock["paragraph"]
+        "notes": ListingBlock["notes"]
+    }
+};
+export type LMemberPre = [string, string]; // classname, variable or type, name
+export type LGeneralMember = { name: string, comment: string[], pre: LMemberPre[] } & LExplanation;
 export type VkDataType = { type: string, name: string };
 // struct
-export type StrutMember = { type: VkDataType[] } & OBGeneralMember;
-export type OBStruct = { type: "struct", member: { [key: string]: StrutMember } } & OBGeneral;
+export type LStrutMember = LGeneralMember;
+export type LStruct = { type: "Struct", member: { [key: string]: LStrutMember }, validUsage: ListingBlock["validUsage"] } & LGeneral;
 // union
-export type UnionMember = { type: VkDataType[] } & OBGeneralMember;
-export type OBUnion = { type: "union", member: { [key: string]: UnionMember } } & OBGeneral;
+export type LUnionMember = LGeneralMember;
+export type LUnion = { type: "Union", member: { [key: string]: LUnionMember }, validUsage: ListingBlock["validUsage"] } & LGeneral;
 // Enum
-export type EnumMember = { isAlias: boolean, value?: string } & OBGeneralMember;
-export type OBEnum = { type: "Enum", member: { [key: string]: EnumMember } } & OBGeneral;
+export type LEnumMember = LBEnumMember & LExplanation;
+export type LEnum = { type: "Enum", member: { [key: string]: LEnumMember } } & LGeneral;
 // Function Pointer.
-export type OBFuncPointer = { type: "FuncPointer", prefixMacro: string, returnType: VkDataType[], params: VkDataType[] } & OBGeneral;
+export type LFuncPointerParam=LBFPParam & LExplanation;
+export type LFuncPointer = Omit<LBFuncPointer,"params"|"paramDetails"> & {params:LBFPParam[]} & LGeneral;
 // alias
-export type OBAlias = { type: "Alias", origin: VkDataType, isPointer: boolean } & OBGeneral;
+export type LAlias = LBAlias & LGeneral;
 // macro ?
-export type OBMacro = { type: "Macro", isAlias: boolean, value: string } & OBGeneral;
+export type LMacro = LBMacro & LGeneral;
+export type LMacroFuncParam=Omit<LGeneralMember,"pre"|"explanation"> & LExplanation;
 // MacroFunc ?
-
+export type LMacroFunc = Omit<LBMacroFunc,"params"> & LGeneral & {params:LMacroFuncParam[]};
+export type LHandle = LBHandle & LGeneral;
 // Command
+export type LCommandParam=LFuncPointerParam;
+export type LCommand = Omit<LBCommand,"params"|"paramDetails"> & {params:LCommandParam[]} & LGeneral;
 // combined.
-export type OBFinal = OBStruct | OBUnion | OBEnum;
+export type LDataType = LStruct | LUnion | LEnum|LAlias| LMacro | LFuncPointer | LMacroFunc | LHandle | LCommand;
 export type OBDataBlock = Openblock & { type: string }//,isParsed:boolean};
-export type OBGrouping = { listingBlock: OBDataBlock | undefined, same: OBGrouping[], pre: OBDataBlock[], post: OBDataBlock[], isParsed: boolean, isSkipped: boolean, parsedLB: ListingBlock };
+export type OBGrouping = { listingBlock: OBDataBlock | undefined, same: OBGrouping[], pre: OBDataBlock[], post: OBDataBlock[], isSkipped: boolean, parsed: LDataType };
 
 export type LBStructMember = { name: string, comment: string[], pre: [string, string][] };
 export type LBStruct = { type: "Struct", name: string, comment: string[], member: { [key: string]: LBStructMember } };
@@ -41,27 +57,27 @@ export type LBMacro = { type: "Macro", name: string, value: string, comment: str
 export type LBMacroFunc = { type: "MacroFunc", name: string, body: string, comment: string[], params: string[] };
 export type LBCommand = { type: "Command", name: string, comment: string[], returns: LBFPReturn[], params: string[], paramDetails: { [key: string]: LBFPParam } };
 // type: "FunctionPointer" | "Alias" | "Macro" | "MacroFunction" | "Command",
-export type LBExplanation = { name: string, plain: string, related: string[] };
-export type LBParagraph = { plain: string, related: string[] };
-export type LBHostSync = { plain: string, related: string[] };
+export type LBExplanation = { name: string, plain: string, related: LRelated[] };
+export type LBParagraph = { plain: string, related: LRelated[] };
+export type LBHostSync = { plain: string, related: LRelated[] };
 export type LBCommandProperties = {
     /**Command Buffer Levels */
     CBL0: string,
     /**Render Pass Scope */
-    RPS1: string, 
+    RPS1: string,
     /**Video Coding Scope */
-    VCS2: string, 
+    VCS2: string,
     /**Supported Queue Types */
-    SQT3: string, 
+    SQT3: string,
     /**Command Type */
     CT4: string,
-    exist:boolean
+    exist: boolean
 };
-export type LBValidUsage = { name: string, plain: string, related: string[], implicit: boolean, commonName: string };
+export type LBValidUsage = { name: string, plain: string, related: LRelated[], implicit: boolean, commonName: string };
 export type LBReturnFiltered = { name: string, entry: string[] };
 export type ListingBlock = {
     main: LBStruct | LBUnion | LBEnum | LBAlias | LBFuncPointer | LBHandle | LBMacro | LBMacroFunc | LBCommand,
-    same: { type: string, name: string }[],
+    same: { type: keyof ReportedKnownData, name: string }[],
     members: { [key: string]: LBExplanation },           // ulist
     paragraph: LBParagraph,                         // paragraph
     validUsage: { [key: string]: LBValidUsage },         // sidebarblock
@@ -72,3 +88,16 @@ export type ListingBlock = {
     notes: LBParagraph,                             // admonitionblock note
     table?: LBExplanation[],                             // tableblock
 }
+
+export type ReportedKnownData = {
+    Struct: { [key: string]: LDataType },
+    Union: { [key: string]: LDataType },
+    Enum: { [key: string]: LDataType },
+    Alias: { [key: string]: LDataType },
+    FuncPointer: { [key: string]: LDataType },
+    Handle: { [key: string]: LDataType },
+    Macro: { [key: string]: LDataType },
+    MacroFunc: { [key: string]: LDataType },
+    Command: { [key: string]: LDataType }
+}
+export type ReportedUnknownData = string[];

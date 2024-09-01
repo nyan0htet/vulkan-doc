@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "fs/promises";
 import type { HtmlTag, Openblock } from "./parser-html";
 import type { WKConfig } from "./parser-worker";
-import type { LBAlias, LBCommand, LBEnum, LBEnumMember, LBExplanation, LBFPParam, LBFuncPointer, LBHandle, LBHostSync, LBMacro, LBMacroFunc, LBReturnFiltered, LBStruct, LBStructMember, LBUnion, LBValidUsage, ListingBlock, OBDataBlock, OBGrouping } from "./openblock-types";
+import type { LBAlias, LBCommand, LBEnum, LBEnumMember, LBExplanation, LBFPParam, LBFuncPointer, LBHandle, LBHostSync, LBMacro, LBMacroFunc, LBReturnFiltered, LBStruct, LBStructMember, LBUnion, LBValidUsage, ListingBlock, OBDataBlock, OBGrouping, ReportedKnownData } from "./openblock-types";
 import { hasClass } from "./parser-sect";
 const htmlTagPattern = /<.*?>/g;
 export const debugOpenBlock = async (wkConfig: WKConfig, openblock: Openblock[], sect1Tags: HtmlTag[][]) => {
@@ -611,23 +611,41 @@ export const debugUnParsedLB = async (wkConfig: WKConfig, nowGroup: OBGrouping, 
 export const analyzeUList = async (currentLB: ListingBlock, currentUlist: OBDataBlock, sectArr: string[]): Promise<void> => {
     const ulistStr = sectArr[currentUlist.sectIndex].substring(currentUlist.start, currentUlist.end);
     const liRegex = RegExp(/<li>[\s\S\n]*?<\/li>/g, 'g');
-    const codeRegex = RegExp(/<code>[\s\S\n]*?<\/code>|<a.*?>[\s\S\n]*?<\/a>/g, 'g');
-    const keywordRegex = /<.*?>/g;
+    const codeRegex = RegExp(/<code>[\s\S\n]*?<\/code>/g, 'g');
+    const aRegex = RegExp(/<a.*?>[\s\S\n]*?<\/a>/g, 'g');
+    const linkRegex = /href="(.*?)"/g;
     const tagRegex = /\n/g;
     let liMatch: RegExpExecArray | null;
     while ((liMatch = liRegex.exec(ulistStr)) !== null) {
         const liStr = ulistStr.substring(liRegex.lastIndex - liMatch[0].length, liRegex.lastIndex);
         let isNeedToSetName = true;
         let codeMatch: RegExpExecArray | null;
-        const memExp: LBExplanation = { name: "", plain: liStr.replace(tagRegex, " ").replace(keywordRegex, "").trim(), related: [] }
+        const memExp: LBExplanation = { name: "", plain: liStr.replace(tagRegex, " ").replace(htmlTagPattern, "").replaceAll("\n"," ").trim(), related: [] };
+        const codeCheck: { [key: string]: boolean } = {};
+        const linkCheck: { [key: string]: boolean } = {};
         while ((codeMatch = codeRegex.exec(liStr)) !== null) {
-            const keyWord = liStr.substring(codeRegex.lastIndex - codeMatch[0].length, codeRegex.lastIndex).replace(keywordRegex, "").trim();
+            const keyWord = liStr.substring(codeRegex.lastIndex - codeMatch[0].length, codeRegex.lastIndex).replace(htmlTagPattern, "").replaceAll("\n"," ").trim();
             if (isNeedToSetName) {
                 memExp.name = keyWord;
                 currentLB.members[keyWord] = memExp;
                 isNeedToSetName = false;
-            } else if (!memExp.related.includes(keyWord)) {
-                memExp.related.push(keyWord);
+            } else if (!codeCheck[keyWord]) {
+                memExp.related.push(["kw", keyWord]);
+                codeCheck[keyWord] = true;
+            }
+        }
+        while ((codeMatch = aRegex.exec(liStr)) !== null) {
+            const keyWord = liStr.substring(aRegex.lastIndex - codeMatch[0].length, aRegex.lastIndex).replace(htmlTagPattern, "").replaceAll("\n"," ").trim();
+            if (isNeedToSetName) {
+                memExp.name = keyWord;
+                currentLB.members[keyWord] = memExp;
+                isNeedToSetName = false;
+            } else if (!linkCheck[keyWord]) {
+                const linkMatch = linkRegex.exec(codeMatch[0]);
+                if (linkMatch && linkMatch[1]) {
+                    memExp.related.push(["a", keyWord, linkMatch[1]]);
+                    linkCheck[keyWord] = true;
+                }
             }
         }
     }
@@ -682,7 +700,9 @@ export const analyzeSidebarBlock = async (currentLB: ListingBlock, sidebarBlock:
                         const ulStr = sectStr.substring(openTag.end, closeTag.end);
                         const liRegex = RegExp(/<li>[\s\S\n]*?<\/li>/g, 'g');
                         const entryRegex = /<span.*?class="vuid">.*?<\/span>/g;
-                        const relatedRegex = RegExp(/<code>.*?<\/code>|<a.*?href.*?>.*?<\/a>/g);
+                        const codeRegex = RegExp(/<code>[\s\S\n]*?<\/code>/g, 'g');
+                        const aRegex = RegExp(/<a.*?>[\s\S\n]*?<\/a>/g, 'g');
+                        const linkRegex = /href="(.*?)"/g;
                         let matchedLiArr: RegExpExecArray | null;
                         ulWhile: while ((matchedLiArr = liRegex.exec(ulStr)) !== null) {
                             const entryIdMatch = matchedLiArr[0].match(entryRegex);
@@ -690,10 +710,23 @@ export const analyzeSidebarBlock = async (currentLB: ListingBlock, sidebarBlock:
                                 const name = entryIdMatch[0].replace(htmlTagPattern, "");
                                 const validUsage: LBValidUsage = { implicit: titleStr.includes("Implicit"), name, plain: matchedLiArr[0].replace(htmlTagPattern, "").replaceAll("\n", " "), related: [], commonName: name.split("-")[1] };
                                 let matchedRalatedArr: RegExpExecArray | null;
-                                while ((matchedRalatedArr = relatedRegex.exec(matchedLiArr[0])) !== null) {
-                                    const keyWord = matchedRalatedArr[0].replace(htmlTagPattern, "");
-                                    if (keyWord !== "") {
-                                        validUsage.related.push(keyWord);
+                                const codeCheck: { [key: string]: boolean } = {};
+                                const linkCheck: { [key: string]: boolean } = {};
+                                while ((matchedRalatedArr = codeRegex.exec(matchedLiArr[0])) !== null) {
+                                    const keyWord = matchedRalatedArr[0].replace(htmlTagPattern, "").replaceAll("\n", " ");
+                                    if (keyWord !== "" && !codeCheck[keyWord]) {
+                                        validUsage.related.push(["kw", keyWord]);
+                                        codeCheck[keyWord] = true;
+                                    }
+                                }
+                                while ((matchedRalatedArr = aRegex.exec(matchedLiArr[0])) !== null) {
+                                    const keyWord = matchedRalatedArr[0].replace(htmlTagPattern, "").replaceAll("\n", " ");
+                                    if (keyWord !== "" && !linkCheck[keyWord]) {
+                                        const linkMatch = linkRegex.exec(matchedRalatedArr[0]);
+                                        if (linkMatch && linkMatch[1]) {
+                                            validUsage.related.push(["a", keyWord, linkMatch[1]]);
+                                            linkCheck[keyWord] = true;
+                                        }
                                     }
                                 }
                                 if (validUsage.name !== "") {
@@ -714,15 +747,30 @@ export const analyzeSidebarBlock = async (currentLB: ListingBlock, sidebarBlock:
                         while ((closeTag = sectTag[++htmlCounter]).level > level) { } //skip to end of ul
                         const ulStr = sectStr.substring(openTag.end, closeTag.end);
                         const liRegex = RegExp(/<li>[\s\S\n]*?<\/li>/g, 'g');
-                        const relatedRegex = RegExp(/<code>.*?<\/code>|<a.*?href.*?>.*?<\/a>/g);
+                        const codeRegex = RegExp(/<code>[\s\S\n]*?<\/code>/g, 'g');
+                        const aRegex = RegExp(/<a.*?>[\s\S\n]*?<\/a>/g, 'g');
+                        const linkRegex = /href="(.*?)"/g;
                         let matchedLiArr: RegExpExecArray | null;
                         while ((matchedLiArr = liRegex.exec(ulStr)) !== null) {
                             const hostSync: LBHostSync = { plain: matchedLiArr[0].replace(htmlTagPattern, "").replaceAll("\n", " "), related: [] };
+                            const codeCheck: { [key: string]: boolean } = {};
+                            const linkCheck: { [key: string]: boolean } = {};
                             let matchedRalatedArr: RegExpExecArray | null;
-                            while ((matchedRalatedArr = relatedRegex.exec(matchedLiArr[0])) !== null) {
-                                const keyWord = matchedRalatedArr[0].replace(htmlTagPattern, "");
-                                if (keyWord !== "") {
-                                    hostSync.related.push(keyWord);
+                            while ((matchedRalatedArr = codeRegex.exec(matchedLiArr[0])) !== null) {
+                                const keyWord = matchedRalatedArr[0].replace(htmlTagPattern, "").replaceAll("\n", " ");
+                                if (keyWord !== "" && !codeCheck[keyWord]) {
+                                    hostSync.related.push(["kw", keyWord]);
+                                    codeCheck[keyWord] = true;
+                                }
+                            }
+                            while ((matchedRalatedArr = aRegex.exec(matchedLiArr[0])) !== null) {
+                                const keyWord = matchedRalatedArr[0].replace(htmlTagPattern, "").replaceAll("\n", " ");
+                                if (keyWord !== "" && !linkCheck[keyWord]) {
+                                    const linkMatch = linkRegex.exec(matchedRalatedArr[0]);
+                                    if (linkMatch && linkMatch[1]) {
+                                        hostSync.related.push(["a", keyWord, linkMatch[1]]);
+                                        linkCheck[keyWord] = true;
+                                    }
                                 }
                             }
                             currentLB.hostSync.push(hostSync);
@@ -738,16 +786,31 @@ export const analyzeSidebarBlock = async (currentLB: ListingBlock, sidebarBlock:
                     while ((closeTag = sectTag[++htmlCounter]).level > level) { } //skip to end of div
                     const pStr = sectStr.substring(openTag.end, closeTag.end);
                     const pRegex = RegExp(/<p>[\s\S\n]*?<\/p>/g, 'g');
-                    const relatedRegex = RegExp(/<code>.*?<\/code>|<a.*?href.*?>.*?<\/a>/g);
+                    const codeRegex = RegExp(/<code>[\s\S\n]*?<\/code>/g, 'g');
+                    const aRegex = RegExp(/<a.*?>[\s\S\n]*?<\/a>/g, 'g');
+                    const linkRegex = /href="(.*?)"/g;
                     let matchedLiArr: RegExpExecArray | null;
                     while ((matchedLiArr = pRegex.exec(pStr)) !== null) {
                         // console.log("host access",new Array(30).join("\n"))
                         const hostAccess: LBHostSync = { plain: matchedLiArr[0].replace(htmlTagPattern, "").replaceAll("\n", " "), related: [] };
+                        const codeCheck: { [key: string]: boolean } = {};
+                        const linkCheck: { [key: string]: boolean } = {};
                         let matchedRalatedArr: RegExpExecArray | null;
-                        while ((matchedRalatedArr = relatedRegex.exec(matchedLiArr[0])) !== null) {
-                            const keyWord = matchedRalatedArr[0].replace(htmlTagPattern, "");
-                            if (keyWord !== "") {
-                                hostAccess.related.push(keyWord);
+                        while ((matchedRalatedArr = codeRegex.exec(matchedLiArr[0])) !== null) {
+                            const keyWord = matchedRalatedArr[0].replace(htmlTagPattern, "").replaceAll("\n", " ");
+                            if (keyWord !== "" && !codeCheck[keyWord]) {
+                                hostAccess.related.push(["kw", keyWord]);
+                                codeCheck[keyWord] = true;
+                            }
+                        }
+                        while ((matchedRalatedArr = aRegex.exec(matchedLiArr[0])) !== null) {
+                            const keyWord = matchedRalatedArr[0].replace(htmlTagPattern, "").replaceAll("\n", " ");
+                            if (keyWord !== "" && !linkCheck[keyWord]) {
+                                const linkMatch = linkRegex.exec(matchedRalatedArr[0]);
+                                if (linkMatch && linkMatch[1]) {
+                                    hostAccess.related.push(["a", keyWord, linkMatch[1]]);
+                                    linkCheck[keyWord] = true;
+                                }
                             }
                         }
                         currentLB.hostAccess.push(hostAccess);
@@ -788,29 +851,65 @@ export const analyzeSidebarBlock = async (currentLB: ListingBlock, sidebarBlock:
 }
 export const analyzeParagraph = async (currentLB: ListingBlock, paragraph: OBDataBlock, sectTags: HtmlTag[][], sectArr: string[]): Promise<void> => {
     const paragraphStr = sectArr[paragraph.sectIndex].substring(paragraph.start, paragraph.end);
-    const codeRegex = RegExp(/<code>[\s\S\n]*?<\/code>|<a.*?>[\s\S\n]*?<\/a>/g, 'g');
+    const codeRegex = RegExp(/<code>[\s\S\n]*?<\/code>/g, 'g');
+    const aRegex = RegExp(/<a.*?>[\s\S\n]*?<\/a>/g, 'g');
+    const linkRegex = /href="(.*?)"/g;
     let codeMatch: RegExpExecArray | null;
     if (!paragraphStr.includes("is defined as")) {
         currentLB.paragraph.plain += paragraphStr.replace(htmlTagPattern, "").replaceAll("\n", " ").trim();
+        const codeCheck: { [key: string]: boolean } = {};
+        const linkCheck: { [key: string]: boolean } = {};
         while ((codeMatch = codeRegex.exec(paragraphStr)) !== null) {
-            const keyWord = paragraphStr.substring(codeRegex.lastIndex - codeMatch[0].length, codeRegex.lastIndex).replace(htmlTagPattern, "").trim();
-            if (!currentLB.paragraph.related.includes(keyWord)) {
-                currentLB.paragraph.related.push(keyWord);
+            const keyWord = paragraphStr.substring(codeRegex.lastIndex - codeMatch[0].length, codeRegex.lastIndex).replace(htmlTagPattern, "").replaceAll("\n"," ").trim();
+            if (keyWord !== "" && !codeCheck[keyWord]) {
+                currentLB.paragraph.related.push(["kw", keyWord]);
+                codeCheck[keyWord] = true;
+            }
+        }
+        while ((codeMatch = aRegex.exec(paragraphStr)) !== null) {
+            const keyWord = paragraphStr.substring(aRegex.lastIndex - codeMatch[0].length, aRegex.lastIndex).replace(htmlTagPattern, "").replaceAll("\n"," ").trim();
+            if (keyWord !== "" && !linkCheck[keyWord]) {
+                const linkMatch = linkRegex.exec(codeMatch[0]);
+                if (linkMatch && linkMatch[1]) {
+                    currentLB.paragraph.related.push(["a", keyWord, linkMatch[1]]);
+                    linkCheck[keyWord] = true;
+                }
             }
         }
     }
 }
 export const analyzeNote = async (currentLB: ListingBlock, note: OBDataBlock, sectTags: HtmlTag[][], sectArr: string[]): Promise<void> => {
     const noteStr = sectArr[note.sectIndex].substring(note.start, note.end);
-    const codeRegex = RegExp(/<code>[\s\S\n]*?<\/code>|<a.*?>[\s\S\n]*?<\/a>/g, 'g');
+    const codeRegex = RegExp(/<code>[\s\S\n]*?<\/code>/g, 'g');
+    const aRegex = RegExp(/<a.*?>[\s\S\n]*?<\/a>/g, 'g');
+    const linkRegex = /href="(.*?)"/g;
     let codeMatch: RegExpExecArray | null;
-
+    const codeCheck: { [key: string]: boolean } = {};
+    const linkCheck: { [key: string]: boolean } = {};
     currentLB.notes.plain += noteStr.replace(htmlTagPattern, "").replaceAll("\n", " ").trim();
     while ((codeMatch = codeRegex.exec(noteStr)) !== null) {
-        const keyWord = noteStr.substring(codeRegex.lastIndex - codeMatch[0].length, codeRegex.lastIndex).replace(htmlTagPattern, "").trim();
-        if (!currentLB.notes.related.includes(keyWord)) {
-            currentLB.notes.related.push(keyWord);
+        const keyWord = noteStr.substring(codeRegex.lastIndex - codeMatch[0].length, codeRegex.lastIndex).replace(htmlTagPattern, "").replaceAll("\n"," ").trim();
+        if (keyWord !== "" && !codeCheck[keyWord]) {
+            currentLB.notes.related.push(["kw", keyWord]);
+            codeCheck[keyWord] = true;
+        }
+        // if (!currentLB.notes.related.includes(keyWord)) {
+        //     currentLB.notes.related.push(keyWord);
+        // }
+    }
+    while ((codeMatch = aRegex.exec(noteStr)) !== null) {
+        const keyWord = noteStr.substring(aRegex.lastIndex - codeMatch[0].length, aRegex.lastIndex).replace(htmlTagPattern, "").replaceAll("\n"," ").trim();
+        if (keyWord !== "" && !linkCheck[keyWord]) {
+            const linkMatch = linkRegex.exec(noteStr);
+            if (linkMatch && linkMatch[1]) {
+                currentLB.notes.related.push(["a", keyWord, linkMatch[1]]);
+                linkCheck[keyWord] = true;
+            }
         }
     }
 
+}
+
+export const debugReportedKnownData = async (wkConfig: WKConfig) => {
+    await writeFile(`${wkConfig.gConfig.debugRoot}/parsed/${wkConfig.id}-parsed.json`, JSON.stringify(wkConfig.reportedKnownData));
 }

@@ -4,8 +4,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build:pro":"node --no-warnings --loader ts-node/esm src/index.ts",
-    "build:dev":"node --no-warnings --loader ts-node/esm src/index.ts debug=true"
+    "html2Json:pro":"node --no-warnings --loader ts-node/esm src/html2Json.ts",
+    "html2Json:dev":"node --no-warnings --loader ts-node/esm src/html2Json.ts debug=true"
   },
   "author": "Nyan Htet",
   "license": "ISC",
