@@ -1,3 +1,4 @@
+import { clearLine, moveCursor } from "readline";
 import type { MsgWMParsed } from "./parser";
 
 const colorCode = {
@@ -61,10 +62,16 @@ export class Progress {
         this.isNeedToPrint = true;
         if (color) this.bufferMessage += `${colorCode[color]}${message.join("")}${colorEndCode}\n`;
     }
-    #realPrint() {
+    async #realPrint() {
         for (let counter = 0; counter < this.progressLine; counter++) {
-            process.stdout.moveCursor(0, -1);
-            process.stdout.clearLine(0);
+            // process.stdout.moveCursor(0, -1);
+            // process.stdout.clearLine(0);
+            await new Promise(resolv=>{
+                moveCursor(process.stdout,0,-1,resolv as ()=>void);
+            });
+            await new Promise(resolv=>{
+                clearLine(process.stdout,0,resolv as ()=>void);
+            });
         }
         if (this.isNeedToPrint && this.bufferMessage != "") console.log(this.bufferMessage);
         console.log(this.showProgress());
@@ -126,9 +133,9 @@ export class Progress {
         const totalParsedTypeTxt = `Overall Status ------ HTML:${warpColor("blue", preNumSpace(noOfTotal, 8))}/${warpColor("blue", preNumSpace(noOfParsed, 8))} ${warpColor("yellow","|")} Openblock:${warpColor("blue", numSpace(noOfOB,4))}/${warpColor("blue", numSpace(noOfOBParsed,4))} ${warpColor("yellow","|")} S:${warpColor("blue", numSpace(noOfSturct, 4))}, U:${warpColor("blue", numSpace(noOfUnion, 4))}, E:${warpColor("blue", numSpace(noOfEnum, 4))}, A:${warpColor("blue", numSpace(noOfAlias, 4))}, FP:${warpColor("blue", numSpace(noOfFuncPointer, 4))}, H:${warpColor("blue", numSpace(noOfHandle, 4))}, M:${warpColor("blue", numSpace(noOfMacro, 4))}, MF:${warpColor("blue", numSpace(noOfMacroFunc, 4))}, C:${warpColor("blue", numSpace(noOfCommand, 4))}`
         return `${returnMsg}${totalParsedTypeTxt}`;
     }
-    onInterval() {
+    async onInterval() {
         if (this.isNeedToPrint === true) {
-            this.#realPrint();
+            await this.#realPrint();
             this.bufferMessage = "";
             this.isNeedToPrint = false;
             if (this.isNeedToStop){
