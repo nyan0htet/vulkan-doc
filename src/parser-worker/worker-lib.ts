@@ -136,8 +136,8 @@ export const analyzeLBStruct = async (sectTag: HtmlTag[], sectStr: string, htmlC
             ++htmlCounter; //end of span
             let tempString = "";
             while (currentTag.type === "span" && currentTag.attr.class.length > 0 && (tempString = sectStr.substring(currentTag.end, sectTag[htmlCounter].start)) !== "}") {
-                const structMember: LBStructMember = { name: "", pre: [], comment: [] };
-                while (tempString !== ";") {
+                const structMember: LBStructMember = { name: "", pre: [], comment: [] ,isArray:false,arraySize:""};
+                while (tempString !== ";" && tempString !== "];") {
                     if (hasClass(currentTag, "c1")) {
                         structMember.comment.push(tempString);
                     } else {
@@ -147,12 +147,26 @@ export const analyzeLBStruct = async (sectTag: HtmlTag[], sectStr: string, htmlC
                     ++htmlCounter; //end of span
                     tempString = sectStr.substring(currentTag.end, sectTag[htmlCounter].start);
                 }
-                const structName = structMember.pre.pop()?.[1];
-                if (structName) {
-                    structMember.name = structName;
-                    structV.member[structName] = structMember;
-                } else {
-                    return;
+                if(tempString===";"){
+                    const structName = structMember.pre.pop()?.[1];
+                    if (structName) {
+                        structMember.name = structName;
+                        structV.member[structName] = structMember;
+                    } else {
+                        return;
+                    }
+                }else if(tempString==="];"){
+                    const arraySize = structMember.pre.pop()?.[1];
+                    structMember.pre.pop();
+                    const structName = structMember.pre.pop()?.[1];
+                    if (structName && arraySize) {
+                        structMember.name = structName;
+                        structMember.isArray=true;
+                        structMember.arraySize=arraySize;
+                        structV.member[structName] = structMember;
+                    } else {
+                        return;
+                    }
                 }
                 currentTag = sectTag[++htmlCounter]; //start of span
                 ++htmlCounter; //end of span
@@ -176,8 +190,8 @@ export const analyzeLBUnion = async (sectTag: HtmlTag[], sectStr: string, htmlCo
             ++htmlCounter; //end of span
             let tempString = "";
             while (currentTag.type === "span" && currentTag.attr.class.length > 0 && (tempString = sectStr.substring(currentTag.end, sectTag[htmlCounter].start)) !== "}") {
-                const unionMember: LBStructMember = { name: "", pre: [], comment: [] };
-                while (tempString !== ";") {
+                const unionMember: LBStructMember = { name: "", pre: [], comment: [] ,isArray:false,arraySize:""};
+                while (tempString !== ";" && tempString !== "];") {
                     if (hasClass(currentTag, "c1")) {
                         unionMember.comment.push(tempString);
                     } else {
@@ -187,12 +201,26 @@ export const analyzeLBUnion = async (sectTag: HtmlTag[], sectStr: string, htmlCo
                     ++htmlCounter; //end of span
                     tempString = sectStr.substring(currentTag.end, sectTag[htmlCounter].start);
                 }
-                const unionName = unionMember.pre.pop()?.[1];
-                if (unionName) {
-                    unionMember.name = unionName;
-                    unionV.member[unionName] = unionMember;
-                } else {
-                    return;
+                if(tempString===";"){
+                    const unionName = unionMember.pre.pop()?.[1];
+                    if (unionName) {
+                        unionMember.name = unionName;
+                        unionV.member[unionName] = unionMember;
+                    } else {
+                        return;
+                    }
+                }else if(tempString==="];"){
+                    const arraySize = unionMember.pre.pop()?.[1];
+                    unionMember.pre.pop();
+                    const unionName = unionMember.pre.pop()?.[1];
+                    if (unionName && arraySize) {
+                        unionMember.name = unionName;
+                        unionMember.isArray=true;
+                        unionMember.arraySize=arraySize;
+                        unionV.member[unionName] = unionMember;
+                    } else {
+                        return;
+                    }
                 }
                 currentTag = sectTag[++htmlCounter]; //start of span
                 ++htmlCounter; //end of span

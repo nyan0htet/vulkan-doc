@@ -16,10 +16,10 @@ export type LMemberPre = [string, string]; // classname, variable or type, name
 export type LGeneralMember = { name: string, comment: string[], pre: LMemberPre[] } & LExplanation;
 export type VkDataType = { type: string, name: string };
 // struct
-export type LStrutMember = LGeneralMember;
+export type LStrutMember = LGeneralMember & {isArray:boolean,arraySize:string};
 export type LStruct = { type: "Struct", member: { [key: string]: LStrutMember }, validUsage: ListingBlock["validUsage"] } & LGeneral;
 // union
-export type LUnionMember = LGeneralMember;
+export type LUnionMember = LGeneralMember& {isArray:boolean,arraySize:string};
 export type LUnion = { type: "Union", member: { [key: string]: LUnionMember }, validUsage: ListingBlock["validUsage"] } & LGeneral;
 // Enum
 export type LEnumMember = LBEnumMember & LExplanation;
@@ -43,7 +43,7 @@ export type LDataType = LStruct | LUnion | LEnum|LAlias| LMacro | LFuncPointer |
 export type OBDataBlock = Openblock & { type: string }//,isParsed:boolean};
 export type OBGrouping = { listingBlock: OBDataBlock | undefined, same: OBGrouping[], pre: OBDataBlock[], post: OBDataBlock[], isSkipped: boolean, parsed: LDataType };
 
-export type LBStructMember = { name: string, comment: string[], pre: [string, string][] };
+export type LBStructMember = { name: string, comment: string[], pre: [string, string][],isArray:boolean,arraySize:string };
 export type LBStruct = { type: "Struct", name: string, comment: string[], member: { [key: string]: LBStructMember } };
 export type LBUnion = { type: "Union", name: string, comment: string[], member: { [key: string]: LBStructMember } };
 export type LBEnumMember = { name: string, value: string, condition: string, comment: string[], type: "number" | "bitFlag" | "alias", alias: string };

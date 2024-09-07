@@ -1,7 +1,7 @@
 import { workerData, Worker } from "worker_threads";
 import { Progress, type ParsedDetails } from "./console";
 import { readFile, writeFile } from "fs/promises";
-import type { ReportedKnownData } from "../worker/openblock-types";
+import type { ReportedKnownData } from "../parser-worker/openblock-types";
 
 export type MsgWMParsed = { type: "parsed", total: number, parsed: number, ob: number, obParsed: number, parsedDetails: ParsedDetails };
 export type MsgWMCompleted = { type: "completed", parsed: MsgWMParsed, unknownSect1Class: string[], unknownSect2Class: string[], unknownSect3Class: string[], unknownSect4Class: string[], unknownOBClass: string[], unknownLBClass: string[], reportedKnownData: ReportedKnownData };

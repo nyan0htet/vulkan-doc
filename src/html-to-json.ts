@@ -33,12 +33,12 @@ if (config.debug === "true") {
     await mkdir(`${debugRoot}/parsed`, { recursive: true });
 }
 progress.print("blue", `Parser will run with ${cpuCores} thread.`);
-const parserW: ParserWorker[] = await ParserWorker.create(gObj,gConfig,new URL("./worker/parser-worker.ts", import.meta.url));
+const parserW: ParserWorker[] = await ParserWorker.create(gObj,gConfig,new URL("./parser-worker/parser-worker.ts", import.meta.url));
 const parseStartTime=Date.now();
 const parsedData = await ParserWorker.parse(gObj,gConfig,parserW, "deps/vkspec.html");
-await writeFile(`${appConfig.output}/${appConfig.sourceJsonFile}`,JSON.stringify(parsedData));
+await writeFile(`${appConfig.output}/${appConfig.parsedJsonFile}`,JSON.stringify(parsedData));
 progress.print("red","completed");
 progress.print("green",`duration:${Date.now()-parseStartTime}`);
-progress.print("green",`output file is ${appConfig.output}/${appConfig.sourceJsonFile}`);
+progress.print("green",`output file is ${appConfig.output}/${appConfig.parsedJsonFile}`);
 await progress.stop();
 setTimeout(()=>exit(0),1000);

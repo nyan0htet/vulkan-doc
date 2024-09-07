@@ -37,7 +37,7 @@ export const linkStruct = async (currentLB: ListingBlock): Promise<LStruct> => {
     for (const memberName in main.member) {
         const mainMember = main.member[memberName];
         const lbMember = currentLB.members[memberName] || nullMember;
-        const member: LStrutMember = { name: mainMember.name, comment: [], pre: mainMember.pre, related: lbMember.related, plainTxt: lbMember.plain };
+        const member: LStrutMember = { name: mainMember.name, comment: [], pre: mainMember.pre, related: lbMember.related, plainTxt: lbMember.plain,isArray:mainMember.isArray,arraySize:mainMember.arraySize };
         lStruct.member[member.name] = member;
     }
     return lStruct;
@@ -62,7 +62,7 @@ export const linkUnion = async (currentLB: ListingBlock): Promise<LUnion> => {
     for (const memberName in main.member) {
         const mainMember = main.member[memberName];
         const lbMember = currentLB.members[memberName] || nullMember;
-        const member: LUnionMember = { name: mainMember.name, comment: [], pre: mainMember.pre, related: lbMember.related, plainTxt: lbMember.plain };
+        const member: LUnionMember = { name: mainMember.name, comment: [], pre: mainMember.pre, related: lbMember.related, plainTxt: lbMember.plain,isArray:mainMember.isArray,arraySize:mainMember.arraySize };
         lUnion.member[member.name] = member;
     }
     return lUnion;

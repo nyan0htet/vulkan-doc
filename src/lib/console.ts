@@ -45,6 +45,9 @@ export class Progress {
         console.log(retObj.showProgress());
         return retObj;
     }
+    static log(color: keyof typeof colorCode, ...message: string[]) {
+        console.log(`${colorCode[color]}${message.join("")}${colorEndCode}\n`);
+    }
     setStatus(workerId: number, status: WorkerStatus) {
         this.workers[workerId].status = status;
         this.print();

@@ -1,5 +1,6 @@
 export const appConfig={
-    sourceJsonFile:"parsedDocs.json",
+    sourceJsonFile:"sourceDocs.json",
+    parsedJsonFile:"parsedDocs.json",
     output:"output",
     html2JsonPath:"debug/html2Json",
 }

@@ -4,8 +4,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "html2Json:pro":"node --no-warnings --loader ts-node/esm src/html2Json.ts",
-    "html2Json:dev":"node --no-warnings --loader ts-node/esm src/html2Json.ts debug=true"
+    "html2Json:pro":"node --no-warnings --loader ts-node/esm src/html-to-json.ts",
+    "html2Json:dev":"node --no-warnings --loader ts-node/esm src/html-to-json.ts debug=true",
+    "combine":"node --no-warnings --loader ts-node/esm src/combine-doc.ts"
   },
   "author": "Nyan Htet",
   "license": "ISC",

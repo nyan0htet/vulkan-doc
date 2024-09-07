@@ -1,4 +1,4 @@
-import type { LAlias, LCommand, LDataType, LEnum, LFuncPointer, LHandle, LMacro, LMacroFunc, LStruct, LUnion } from "../worker/openblock-types"
+import type { LAlias, LCommand, LDataType, LEnum, LFuncPointer, LHandle, LMacro, LMacroFunc, LStruct, LUnion } from "../parser-worker/openblock-types"
 import { aliasNoteList } from "./alias"
 import { commandNoteList } from "./command"
 import { enumNoteList } from "./enum"
